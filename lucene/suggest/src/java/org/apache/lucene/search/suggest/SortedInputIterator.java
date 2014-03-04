@@ -20,6 +20,7 @@ package org.apache.lucene.search.suggest;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.Set;
 
 import org.apache.lucene.search.suggest.Sort.ByteSequencesReader;
 import org.apache.lucene.search.suggest.Sort.ByteSequencesWriter;
@@ -222,5 +223,15 @@ public class SortedInputIterator implements InputIterator {
     scratch.length -= 2; // payload length info (short)
     scratch.length -= payloadLength; // payload
     return payloadScratch;
+  }
+
+  @Override
+  public Set<BytesRef> contexts() {
+    return source.contexts();
+  }
+
+  @Override
+  public boolean hasContexts() {
+    return source.hasContexts();
   }
 }

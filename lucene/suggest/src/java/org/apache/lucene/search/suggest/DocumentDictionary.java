@@ -191,5 +191,15 @@ public class DocumentDictionary implements Dictionary {
       }
       return relevantFields;
     }
+
+    @Override
+    public Set<BytesRef> contexts() {
+      return null;
+    }
+
+    @Override
+    public boolean hasContexts() {
+      return false;
+    }
   }
 }

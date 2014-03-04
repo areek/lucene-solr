@@ -18,6 +18,7 @@ package org.apache.lucene.search.suggest;
  */
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.BytesRef;
@@ -84,5 +85,15 @@ public class BufferedInputIterator implements InputIterator {
   @Override
   public boolean hasPayloads() {
     return hasPayloads;
+  }
+
+  @Override
+  public Set<BytesRef> contexts() {
+    return null;
+  }
+
+  @Override
+  public boolean hasContexts() {
+    return false;
   }
 }
