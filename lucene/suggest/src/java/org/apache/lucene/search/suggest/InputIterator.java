@@ -45,8 +45,10 @@ public interface InputIterator extends BytesRefIterator {
   /** Returns true if the iterator has payloads */
   public boolean hasPayloads();
   
+  /** Returns a set of contexts the input belongs to */
   public Set<BytesRef> contexts();
 
+  /** Returns true if the iterator has contexts */
   public boolean hasContexts();
   
   /** Singleton InputIterator that iterates over 0 BytesRefs. */
