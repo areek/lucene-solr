@@ -183,7 +183,6 @@ public class TestFreeTextSuggester extends LuceneTestCase {
         public boolean hasContexts() {
           return false;
         }
-
       });
     if (VERBOSE) {
       System.out.println(sug.sizeInBytes() + " bytes");

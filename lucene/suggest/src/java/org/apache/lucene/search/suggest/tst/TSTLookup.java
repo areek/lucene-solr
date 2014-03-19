@@ -20,6 +20,7 @@ package org.apache.lucene.search.suggest.tst;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.search.suggest.InputIterator;
 import org.apache.lucene.search.suggest.Lookup;
@@ -120,7 +121,10 @@ public class TSTLookup extends Lookup {
   }
 
   @Override
-  public List<LookupResult> lookup(CharSequence key, boolean onlyMorePopular, int num) {
+  public List<LookupResult> lookup(CharSequence key, Set<BytesRef> contexts, boolean onlyMorePopular, int num) {
+    if (contexts != null) {
+      throw new IllegalArgumentException("this suggester doesn't support contexts");
+    }
     List<TernaryTreeNode> list = autocomplete.prefixCompletion(root, key, 0);
     List<LookupResult> res = new ArrayList<>();
     if (list == null || list.size() == 0) {
