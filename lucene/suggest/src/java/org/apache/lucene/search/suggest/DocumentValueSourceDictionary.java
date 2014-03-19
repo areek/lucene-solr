@@ -70,6 +70,17 @@ public class DocumentValueSourceDictionary extends DocumentDictionary {
   
   /**
    * Creates a new dictionary with the contents of the fields named <code>field</code>
+   * for the terms, <code>payload</code> for the corresponding payloads, <code>contexts</code>
+   * for the associated contexts and uses the <code>weightsValueSource</code> supplied 
+   * to determine the score.
+   */
+  public DocumentValueSourceDictionary(IndexReader reader, String field,
+                                       ValueSource weightsValueSource, String payload, String contexts) {
+    super(reader, field, null, payload, contexts);
+    this.weightsValueSource = weightsValueSource;  
+  }
+  /**
+   * Creates a new dictionary with the contents of the fields named <code>field</code>
    * for the terms, <code>payloadField</code> for the corresponding payloads
    * and uses the <code>weightsValueSource</code> supplied to determine the 
    * score.
@@ -93,7 +104,7 @@ public class DocumentValueSourceDictionary extends DocumentDictionary {
   
   @Override
   public InputIterator getEntryIterator() throws IOException {
-    return new DocumentValueSourceInputIterator(payloadField!=null);
+    return new DocumentValueSourceInputIterator(payloadField!=null, contextsField!=null);
   }
   
   final class DocumentValueSourceInputIterator extends DocumentDictionary.DocumentInputIterator {
@@ -106,9 +117,9 @@ public class DocumentValueSourceDictionary extends DocumentDictionary {
     /** current leave index */
     private int currentLeafIndex = 0;
     
-    public DocumentValueSourceInputIterator(boolean hasPayloads)
+    public DocumentValueSourceInputIterator(boolean hasPayloads, boolean hasContexts)
         throws IOException {
-      super(hasPayloads);
+      super(hasPayloads, hasContexts);
       leaves = reader.leaves();
       starts = new int[leaves.size() + 1];
       for (int i = 0; i < leaves.size(); i++) {

@@ -26,6 +26,7 @@ import org.apache.lucene.store.DataInput;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefIterator;
 import org.apache.lucene.util.CharsRef;
 import org.apache.lucene.util.IntsRef;
 import org.apache.lucene.util.OfflineSorter.ByteSequencesWriter;
@@ -96,6 +97,9 @@ public class WFSTCompletionLookup extends Lookup {
   public void build(InputIterator iterator) throws IOException {
     if (iterator.hasPayloads()) {
       throw new IllegalArgumentException("this suggester doesn't support payloads");
+    }
+    if(iterator.hasContexts()) {
+      throw new IllegalArgumentException("this suggester doesn't support contexts");
     }
     count = 0;
     BytesRef scratch = new BytesRef();
@@ -260,7 +264,7 @@ public class WFSTCompletionLookup extends Lookup {
     }
 
     @Override
-    protected void encode(ByteSequencesWriter writer, ByteArrayDataOutput output, byte[] buffer, BytesRef spare, BytesRef payload, long weight) throws IOException {
+    protected void encode(ByteSequencesWriter writer, ByteArrayDataOutput output, byte[] buffer, BytesRef spare, BytesRef payload, BytesRefIterator contexts, long weight) throws IOException {
       if (spare.length + 4 >= buffer.length) {
         buffer = ArrayUtil.grow(buffer, spare.length + 4);
       }

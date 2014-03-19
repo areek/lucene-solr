@@ -19,9 +19,11 @@ package org.apache.lucene.search.suggest;
 
 
 import java.io.*;
+import java.util.Set;
 
 import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefIterator;
 import org.apache.lucene.util.IOUtils;
 
 
@@ -208,6 +210,16 @@ public class FileDictionary implements Dictionary {
       } catch (NumberFormatException e) {
         curWeight = (long)Double.parseDouble(weight);
       }
+    }
+
+    @Override
+    public BytesRefIterator contexts() {
+      return BytesRefIterator.EMPTY;
+    }
+
+    @Override
+    public boolean hasContexts() {
+      return false;
     }
   }
 }

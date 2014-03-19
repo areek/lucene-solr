@@ -45,6 +45,7 @@ import org.apache.lucene.search.suggest.Input;
 import org.apache.lucene.search.suggest.InputArrayIterator;
 import org.apache.lucene.search.suggest.InputIterator;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefIterator;
 import org.apache.lucene.util.LineFileDocs;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
@@ -170,6 +171,16 @@ public class TestFreeTextSuggester extends LuceneTestCase {
 
         @Override
         public boolean hasPayloads() {
+          return false;
+        }
+
+        @Override
+        public BytesRefIterator contexts() {
+          return BytesRefIterator.EMPTY;
+        }
+
+        @Override
+        public boolean hasContexts() {
           return false;
         }
 
@@ -362,6 +373,16 @@ public class TestFreeTextSuggester extends LuceneTestCase {
 
         @Override
         public boolean hasPayloads() {
+          return false;
+        }
+
+        @Override
+        public BytesRefIterator contexts() {
+          return BytesRefIterator.EMPTY;
+        }
+
+        @Override
+        public boolean hasContexts() {
           return false;
         }
       });

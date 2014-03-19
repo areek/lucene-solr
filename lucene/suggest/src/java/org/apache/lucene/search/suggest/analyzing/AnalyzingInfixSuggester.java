@@ -189,6 +189,10 @@ public class AnalyzingInfixSuggester extends Lookup implements Closeable {
   @Override
   public void build(InputIterator iter) throws IOException {
 
+    if(iter.hasContexts()) {
+      throw new IllegalArgumentException("this suggester doesn't support contexts");
+    }
+    
     if (searcherMgr != null) {
       searcherMgr.close();
       searcherMgr = null;

@@ -24,6 +24,7 @@ import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.search.suggest.DocumentDictionary;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefIterator;
 import org.apache.lucene.util.LuceneTestCase;
 import org.junit.Test;
 
@@ -49,9 +50,10 @@ public class DocumentDictionaryTest extends LuceneTestCase {
   static final String FIELD_NAME = "f1";
   static final String WEIGHT_FIELD_NAME = "w1";
   static final String PAYLOAD_FIELD_NAME = "p1";
+  static final String CONTEXT_FIELD_NAME = "c1";
   
   /** Returns Pair(list of invalid document terms, Map of document term -> document) */
-  private Map.Entry<List<String>, Map<String, Document>> generateIndexDocuments(int ndocs, boolean requiresPayload) {
+  private Map.Entry<List<String>, Map<String, Document>> generateIndexDocuments(int ndocs, boolean requiresPayload, boolean requiresContexts) {
     Map<String, Document> docs = new HashMap<>();
     List<String> invalidDocTerms = new ArrayList<>();
     for(int i = 0; i < ndocs ; i++) {
@@ -75,6 +77,15 @@ public class DocumentDictionaryTest extends LuceneTestCase {
         } else if (requiresPayload) {
           invalidDoc = true;
         }
+      }
+      
+      if (requiresContexts || usually()) {
+        if (usually()) {
+          for (int j = 0; j < atLeast(2); j++) {
+            doc.add(new StoredField(CONTEXT_FIELD_NAME, new BytesRef("context_" + i + "_"+ j)));
+          }
+        }
+        // we should allow entries without context
       }
       
       // usually have valid weight field in document
@@ -125,7 +136,7 @@ public class DocumentDictionaryTest extends LuceneTestCase {
     IndexWriterConfig iwc = newIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(random()));
     iwc.setMergePolicy(newLogMergePolicy());
     RandomIndexWriter writer = new RandomIndexWriter(random(), dir, iwc);
-    Map.Entry<List<String>, Map<String, Document>> res = generateIndexDocuments(atLeast(1000), true);
+    Map.Entry<List<String>, Map<String, Document>> res = generateIndexDocuments(atLeast(1000), true, false);
     Map<String, Document> docs = res.getValue();
     List<String> invalidDocTerms = res.getKey();
     for(Document doc: docs.values()) {
@@ -160,7 +171,7 @@ public class DocumentDictionaryTest extends LuceneTestCase {
     IndexWriterConfig iwc = newIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(random()));
     iwc.setMergePolicy(newLogMergePolicy());
     RandomIndexWriter writer = new RandomIndexWriter(random(), dir, iwc);
-    Map.Entry<List<String>, Map<String, Document>> res = generateIndexDocuments(atLeast(1000), false);
+    Map.Entry<List<String>, Map<String, Document>> res = generateIndexDocuments(atLeast(1000), false, false);
     Map<String, Document> docs = res.getValue();
     List<String> invalidDocTerms = res.getKey();
     for(Document doc: docs.values()) {
@@ -191,12 +202,59 @@ public class DocumentDictionaryTest extends LuceneTestCase {
   }
   
   @Test
+  public void testWithContexts() throws IOException {
+    Directory dir = newDirectory();
+    IndexWriterConfig iwc = newIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(random()));
+    iwc.setMergePolicy(newLogMergePolicy());
+    RandomIndexWriter writer = new RandomIndexWriter(random(), dir, iwc);
+    Map.Entry<List<String>, Map<String, Document>> res = generateIndexDocuments(atLeast(1000), true, true);
+    Map<String, Document> docs = res.getValue();
+    List<String> invalidDocTerms = res.getKey();
+    for(Document doc: docs.values()) {
+      writer.addDocument(doc);
+    }
+    writer.commit();
+    writer.close();
+    IndexReader ir = DirectoryReader.open(dir);
+    Dictionary dictionary = new DocumentDictionary(ir, FIELD_NAME, WEIGHT_FIELD_NAME, PAYLOAD_FIELD_NAME, CONTEXT_FIELD_NAME);
+    InputIterator inputIterator = dictionary.getEntryIterator();
+    BytesRef f;
+    while((f = inputIterator.next())!=null) {
+      Document doc = docs.remove(f.utf8ToString());
+      assertTrue(f.equals(new BytesRef(doc.get(FIELD_NAME))));
+      Field weightField = doc.getField(WEIGHT_FIELD_NAME);
+      assertEquals(inputIterator.weight(), (weightField != null) ? weightField.numericValue().longValue() : 0);
+      assertTrue(inputIterator.payload().equals(doc.getField(PAYLOAD_FIELD_NAME).binaryValue()));
+      List<BytesRef> oriCtxs = new ArrayList<>();
+      for (StorableField ctxf : doc.getFields(CONTEXT_FIELD_NAME)) {
+        oriCtxs.add(ctxf.binaryValue());
+      }
+      BytesRef ctx;
+      BytesRefIterator ctxIterator = inputIterator.contexts();
+      int ctxCount = 0;
+      while((ctx = ctxIterator.next()) != null) {
+        assertTrue(oriCtxs.contains(ctx));
+        ctxCount++;
+      }
+      assertEquals(oriCtxs.size(), ctxCount);
+    }
+    
+    for (String invalidTerm : invalidDocTerms) {
+      assertNotNull(docs.remove(invalidTerm));
+    }
+    assertTrue(docs.isEmpty());
+    
+    ir.close();
+    dir.close();
+  }
+  
+  @Test
   public void testWithDeletions() throws IOException {
     Directory dir = newDirectory();
     IndexWriterConfig iwc = newIndexWriterConfig(TEST_VERSION_CURRENT, new MockAnalyzer(random()));
     iwc.setMergePolicy(newLogMergePolicy());
     RandomIndexWriter writer = new RandomIndexWriter(random(), dir, iwc);
-    Map.Entry<List<String>, Map<String, Document>> res = generateIndexDocuments(atLeast(1000), false);
+    Map.Entry<List<String>, Map<String, Document>> res = generateIndexDocuments(atLeast(1000), false, false);
     Map<String, Document> docs = res.getValue();
     List<String> invalidDocTerms = res.getKey();
     Random rand = random();

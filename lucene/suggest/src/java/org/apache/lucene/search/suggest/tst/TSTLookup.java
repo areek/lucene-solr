@@ -55,6 +55,9 @@ public class TSTLookup extends Lookup {
     if (iterator.hasPayloads()) {
       throw new IllegalArgumentException("this suggester doesn't support payloads");
     }
+    if(iterator.hasContexts()) {
+      throw new IllegalArgumentException("this suggester doesn't support contexts");
+    }
     root = new TernaryTreeNode();
 
     // make sure it's sorted and the comparator uses UTF16 sort order

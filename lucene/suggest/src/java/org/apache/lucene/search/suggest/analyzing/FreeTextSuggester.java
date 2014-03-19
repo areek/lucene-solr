@@ -286,7 +286,10 @@ public class FreeTextSuggester extends Lookup {
    *  the weights for the suggestions are ignored. */
   public void build(InputIterator iterator, double ramBufferSizeMB) throws IOException {
     if (iterator.hasPayloads()) {
-      throw new IllegalArgumentException("payloads are not supported");
+      throw new IllegalArgumentException("this suggester doesn't support payloads");
+    }
+    if(iterator.hasContexts()) {
+      throw new IllegalArgumentException("this suggester doesn't support contexts");
     }
 
     String prefix = getClass().getSimpleName();

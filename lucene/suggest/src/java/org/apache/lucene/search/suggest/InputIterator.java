@@ -44,6 +44,12 @@ public interface InputIterator extends BytesRefIterator {
   /** Returns true if the iterator has payloads */
   public boolean hasPayloads();
   
+  /** Returns a set of contexts the suggestion is associate with */
+  public BytesRefIterator contexts();
+  
+  /** Reurns true if the iterator has context sets */
+  public boolean hasContexts();
+  
   /** Singleton InputIterator that iterates over 0 BytesRefs. */
   public static final InputIterator EMPTY = new InputIteratorWrapper(BytesRefIterator.EMPTY);
   
@@ -80,6 +86,16 @@ public interface InputIterator extends BytesRefIterator {
 
     @Override
     public boolean hasPayloads() {
+      return false;
+    }
+
+    @Override
+    public BytesRefIterator contexts() {
+      return BytesRefIterator.EMPTY;
+    }
+
+    @Override
+    public boolean hasContexts() {
       return false;
     }
   }

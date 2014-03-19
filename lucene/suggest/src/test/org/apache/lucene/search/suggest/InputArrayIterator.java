@@ -17,10 +17,13 @@ package org.apache.lucene.search.suggest;
  * limitations under the License.
  */
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefIterator;
 
 /**
  * A {@link InputIterator} over a sequence of {@link Input}s.
@@ -28,6 +31,7 @@ import org.apache.lucene.util.BytesRef;
 public final class InputArrayIterator implements InputIterator {
   private final Iterator<Input> i;
   private final boolean hasPayloads;
+  private final boolean hasContexts;
   private boolean first;
   private Input current;
   private final BytesRef spare = new BytesRef();
@@ -38,8 +42,10 @@ public final class InputArrayIterator implements InputIterator {
       current = i.next();
       first = true;
       this.hasPayloads = current.hasPayloads;
+      this.hasContexts = current.hasContexts;
     } else {
       this.hasPayloads = false;
+      this.hasContexts = false;
     }
   }
 
@@ -77,5 +83,27 @@ public final class InputArrayIterator implements InputIterator {
   @Override
   public boolean hasPayloads() {
     return hasPayloads;
+  }
+
+  @Override
+  public BytesRefIterator contexts() {
+    if (current.contexts != null) {
+      final Iterator<BytesRef> bytesRefIter = current.contexts.iterator(); 
+      return new BytesRefIterator() {
+        @Override
+        public BytesRef next() throws IOException {
+          if (bytesRefIter.hasNext()) {
+            return bytesRefIter.next();
+          }
+          return null;
+        }
+      };
+    }
+    return BytesRefIterator.EMPTY;
+  }
+
+  @Override
+  public boolean hasContexts() {
+    return hasContexts;
   }
 }

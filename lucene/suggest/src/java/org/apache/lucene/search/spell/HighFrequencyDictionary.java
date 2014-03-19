@@ -109,5 +109,15 @@ public class HighFrequencyDictionary implements Dictionary {
     public boolean hasPayloads() {
       return false;
     }
+
+    @Override
+    public BytesRefIterator contexts() {
+      return BytesRefIterator.EMPTY;
+    }
+
+    @Override
+    public boolean hasContexts() {
+      return false;
+    }
   }
 }

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Random;
 
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefIterator;
 
 /**
  * This wrapper buffers the incoming elements and makes sure they are in
@@ -74,5 +75,14 @@ public class UnsortedInputIterator extends BufferedInputIterator {
       return payloads.get(payloadSpare, currentOrd);
     }
     return null;
+  }
+  
+  @Override
+  public BytesRefIterator contexts() {
+    if (hasContexts() && curPos < contextSets.size()) {
+      assert currentOrd == ords[curPos];
+      return contextSets.get(currentOrd);
+    }
+    return BytesRefIterator.EMPTY;
   }
 }
