@@ -19,7 +19,6 @@ package org.apache.lucene.search.suggest;
 
 
 import java.io.*;
-import java.util.Set;
 
 import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.util.BytesRef;
