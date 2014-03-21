@@ -112,6 +112,21 @@ New Features
   you update the value of a BinaryDocValuesField without reindexing the
   document(s). (Shai Erera)
 
+* LUCENE-4072: Add ICUNormalizer2CharFilter, which lets you do unicode normalization
+  with offset correction before the tokenizer. (David Goldfarb, Ippei UKAI via Robert Muir)
+
+* LUCENE-5476: Add RandomSamplingFacetsCollector for computing facets on a sampled
+  set of matching hits, in cases where there are millions of hits.
+  (Rob Audenaerde, Gilad Barkai, Shai Erera)
+
+* LUCENE-4984: Add SegmentingTokenizerBase, abstract class for tokenizers
+  that want to do two-pass tokenization such as by sentence and then by word.
+  (Robert Muir)
+
+* LUCENE-5489: Add Rescorer/QueryRescorer, to resort the hits from a
+  first pass search using scores from a more costly second pass
+  search. (Simon Willnauer, Robert Muir, Mike McCandless)
+
 API Changes
 
 * LUCENE-5454: Add RandomAccessOrds, an optional extension of SortedSetDocValues
@@ -142,6 +157,11 @@ API Changes
   The TopNSearcher now returns a struct like class that indicates if the result
   is complete in the sense of the top N or not. Consumers of this API should assert
   on the completeness if the bounded queue size is know ahead of time. (Simon Willnauer)
+
+* LUCENE-4984: Deprecate ThaiWordFilter and smartcn SentenceTokenizer and WordTokenFilter.
+  These filters would not work correctly with CharFilters and could not be safely placed
+  at an arbitrary position in the analysis chain. Use ThaiTokenizer and HMMChineseTokenizer
+  instead. (Robert Muir)
 
 Optimizations
 
@@ -216,6 +236,12 @@ Bug fixes
   searching for a point by the same point as a query rarely worked.  (David Smiley)
 
 * LUCENE-5111: Fix WordDelimiterFilter to return offsets in correct order.  (Robert Muir)
+
+* LUCENE-5538: Fix FastVectorHighlighter bug with index-time synonyms when the
+  query is more complex than a single phrase.  (Robert Muir)
+
+* LUCENE-5544: Exceptions during IndexWriter.rollback could leak file handles
+  and the write lock. (Robert Muir)
 
 Test Framework
 

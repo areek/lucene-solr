@@ -77,7 +77,6 @@ import org.apache.lucene.analysis.payloads.PayloadEncoder;
 import org.apache.lucene.analysis.snowball.TestSnowball;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.synonym.SynonymMap;
-import org.apache.lucene.analysis.th.ThaiWordFilter;
 import org.apache.lucene.analysis.util.CharArrayMap;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.wikipedia.WikipediaTokenizer;
@@ -164,8 +163,6 @@ public class TestRandomChains extends BaseTokenStreamTestCase {
           PathHierarchyTokenizer.class,
           // TODO: it seems to mess up offsets!?
           WikipediaTokenizer.class,
-          // TODO: doesn't handle graph inputs
-          ThaiWordFilter.class,
           // TODO: doesn't handle graph inputs
           CJKBigramFilter.class,
           // TODO: doesn't handle graph inputs (or even look at positionIncrement)
@@ -689,7 +686,7 @@ public class TestRandomChains extends BaseTokenStreamTestCase {
         */
         descr.append("\n  ");
         descr.append(ctor.getDeclaringClass().getName());
-        String params = Arrays.toString(args);
+        String params = Arrays.deepToString(args);
         params = params.substring(1, params.length()-1);
         descr.append("(").append(params).append(")");
         return instance;
@@ -920,7 +917,7 @@ public class TestRandomChains extends BaseTokenStreamTestCase {
         System.out.println("Creating random analyzer:" + a);
       }
       try {
-        checkRandomData(random, a, 50*RANDOM_MULTIPLIER, 256, false,
+        checkRandomData(random, a, 50*RANDOM_MULTIPLIER, 128, false,
                         false /* We already validate our own offsets... */);
       } catch (Throwable e) {
         System.err.println("Exception from random analyzer: " + a);

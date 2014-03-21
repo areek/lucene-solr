@@ -137,6 +137,8 @@ public class SyncSliceTest extends AbstractFullDistribZkTestBase {
     // we only set the connect timeout, not so timeout
     baseServer.setConnectionTimeout(30000);
     baseServer.request(request);
+    baseServer.shutdown();
+    baseServer = null;
     
     waitForThingsToLevelOut(15);
     
@@ -162,10 +164,10 @@ public class SyncSliceTest extends AbstractFullDistribZkTestBase {
     assertEquals(shardCount - 1, jetties.size());
     
     chaosMonkey.killJetty(leaderJetty);
-
-    Thread.sleep(2000);
     
-    waitForThingsToLevelOut(120);
+    Thread.sleep(3000);
+    
+    waitForNoShardInconsistency();
     
     Thread.sleep(1000);
     
@@ -185,7 +187,7 @@ public class SyncSliceTest extends AbstractFullDistribZkTestBase {
     // bring back dead node
     ChaosMonkey.start(deadJetty.jetty); // he is not the leader anymore
     
-    waitTillRecovered();
+    waitTillAllNodesActive();
     
     skipServers = getRandomOtherJetty(leaderJetty, deadJetty);
     skipServers.addAll( getRandomOtherJetty(leaderJetty, deadJetty));
@@ -226,20 +228,14 @@ public class SyncSliceTest extends AbstractFullDistribZkTestBase {
     // kill the current leader
     chaosMonkey.killJetty(leaderJetty);
     
-    Thread.sleep(3000);
-    
-    waitForThingsToLevelOut(120);
-    
-    Thread.sleep(2000);
-    
-    waitForRecoveriesToFinish(false);
+    waitForNoShardInconsistency();
 
     checkShardConsistency(true, true);
     
     success = true;
   }
 
-  private void waitTillRecovered() throws Exception {
+  private void waitTillAllNodesActive() throws Exception {
     for (int i = 0; i < 60; i++) { 
       Thread.sleep(3000);
       ZkStateReader zkStateReader = cloudClient.getZkStateReader();
@@ -262,7 +258,7 @@ public class SyncSliceTest extends AbstractFullDistribZkTestBase {
       }
     }
     printLayout();
-    fail("timeout waiting to see recovered node");
+    fail("timeout waiting to see all nodes active");
   }
 
   private String waitTillInconsistent() throws Exception, InterruptedException {

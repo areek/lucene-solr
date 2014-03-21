@@ -24,11 +24,11 @@ $Id$
 
 Versions of Major Components
 ---------------------
-Apache Tika 1.4
+Apache Tika 1.5
 Carrot2 3.8.0
 Velocity 1.7 and Velocity Tools 2.0
 Apache UIMA 2.3.1
-Apache ZooKeeper 3.4.5
+Apache ZooKeeper 3.4.6
 
 Upgrading from Solr 4.x
 ----------------------
@@ -70,11 +70,11 @@ Other Changes
 
 Versions of Major Components
 ---------------------
-Apache Tika 1.4
+Apache Tika 1.5
 Carrot2 3.8.0
 Velocity 1.7 and Velocity Tools 2.0
 Apache UIMA 2.3.1
-Apache ZooKeeper 3.4.5
+Apache ZooKeeper 3.4.6
 
 Upgrading from Solr 4.7
 ----------------------
@@ -91,6 +91,8 @@ Upgrading from Solr 4.7
   7u1.  Please review the list of known JVM bugs at:
   http://wiki.apache.org/lucene-java/JavaBugs
   Solr 4.8 was also tested to work with Java 8, so give it a try!
+
+* ZooKeeper is upgraded from 3.4.5 to 3.4.6.
 
 Detailed Change List
 ----------------------
@@ -134,6 +136,13 @@ New Features
   
 * SOLR-1604: Wildcards, ORs etc inside Phrase Queries. (Ahmet Arslan via Erick Erickson)
 
+* SOLR-5865: Provide a MiniSolrCloudCluster to enable easier testing.
+ (Greg Chanan via Mark Miller)
+
+* SOLR-5860: Use leaderConflictResolveWait in WaitForState during recovery/startup,
+  improve logging and force refresh cluster state every 15 seconds.
+  (Timothy Potter via shalin)
+
 Bug Fixes
 ----------------------
 
@@ -142,9 +151,6 @@ Bug Fixes
 
 * SOLR-5777: Fix ordering of field values in JSON updates where
   field name key is repeated (hossman)
-
-* SOLR-5782: The full MapReduceIndexer help text does not display when using
-  --help.  (Mark Miller, Wolfgang Hoschek)
 
 * SOLR-5734: We should use System.nanoTime rather than System.currentTimeMillis
   when calculating elapsed time. (Mark Miller, Ramkumar Aiyengar)
@@ -174,14 +180,14 @@ Bug Fixes
 * SOLR-5861: Recovery should not set onlyIfLeaderActive=true for slice in 'recovery'
   state. (shalin)
 
-* SOLR-5866: UpdateShardHandler needs to use the system default scheme registry to
-  properly handle https via javax.net.ssl.* properties. (Steve Davids via shalin)
-
 * SOLR-5550: shards.info is not returned by a short circuited distributed query.
   (Timothy Potter, shalin)
 
 * SOLR-5858, SOLR-4812: edismax and dismax query parsers can be used for parsing 
   highlight queries. (Alan Woodward, Tien Nguyen Manh)
+
+* SOLR-5893: On restarting overseer designate , move itself to front of the queue (Noble Paul)
+
 
 Optimizations
 ----------------------
@@ -240,6 +246,13 @@ Other Changes
 * SOLR-5838: Relative SolrHome Path Bug At AbstractFullDistribZkTestBase.
   (Furkan KAMACI via shalin)
 
+* SOLR-5763: Upgrade to Tika 1.5 (Vitaliy Zhovtyuk via Steve Rowe)
+
+* SOLR-5881: Upgrade ZooKeeper to 3.4.6 (Shawn Heisey)
+
+* SOLR-5883: Many tests do not shutdown SolrServer. 
+  (Tomás Fernández Löbbe via Mark Miller)
+
 ==================  4.7.1  ==================
 
 Versions of Major Components
@@ -273,6 +286,16 @@ Bug Fixes
 
 * SOLR-5867: OverseerCollectionProcessor isn't properly generating https urls in some
   cases. (Steve Davids via shalin)
+
+* SOLR-5866: UpdateShardHandler needs to use the system default scheme registry to
+  properly handle https via javax.net.ssl.* properties. (Steve Davids via shalin)
+
+* SOLR-5782: The full MapReduceIndexer help text does not display when using
+  --help.  (Mark Miller, Wolfgang Hoschek)
+
+* SOLR-5824: Merge up Solr MapReduce contrib code to latest external changes.
+  Includes a few minor bug fixes.
+  (Mark Miller)
 
 ==================  4.7.0 ==================
 
