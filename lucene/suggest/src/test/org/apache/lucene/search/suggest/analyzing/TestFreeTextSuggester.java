@@ -175,8 +175,8 @@ public class TestFreeTextSuggester extends LuceneTestCase {
         }
 
         @Override
-        public BytesRefIterator contexts() {
-          return BytesRefIterator.EMPTY;
+        public Set<BytesRef> contexts() {
+          return null;
         }
 
         @Override
@@ -376,8 +376,8 @@ public class TestFreeTextSuggester extends LuceneTestCase {
         }
 
         @Override
-        public BytesRefIterator contexts() {
-          return BytesRefIterator.EMPTY;
+        public Set<BytesRef> contexts() {
+          return null;
         }
 
         @Override

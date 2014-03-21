@@ -20,6 +20,7 @@ package org.apache.lucene.search.suggest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.BytesRef;
@@ -38,7 +39,7 @@ public class BufferedInputIterator implements InputIterator {
   /** buffered payload entries */
   protected BytesRefArray payloads = new BytesRefArray(Counter.newCounter());
   /** buffered context set entries */
-  protected List<BytesRefIterator> contextSets = new ArrayList<>();
+  protected List<Set<BytesRef>> contextSets = new ArrayList<>();
   /** current buffer position */
   protected int curPos = -1;
   /** buffered weights, parallel with {@link #entries} */
@@ -98,11 +99,11 @@ public class BufferedInputIterator implements InputIterator {
   }
 
   @Override
-  public BytesRefIterator contexts() {
+  public Set<BytesRef> contexts() {
     if (hasContexts && curPos < contextSets.size()) {
       return contextSets.get(curPos);
     }
-    return BytesRefIterator.EMPTY;
+    return null;
   }
 
   @Override

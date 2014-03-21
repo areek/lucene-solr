@@ -86,20 +86,8 @@ public final class InputArrayIterator implements InputIterator {
   }
 
   @Override
-  public BytesRefIterator contexts() {
-    if (current.contexts != null) {
-      final Iterator<BytesRef> bytesRefIter = current.contexts.iterator(); 
-      return new BytesRefIterator() {
-        @Override
-        public BytesRef next() throws IOException {
-          if (bytesRefIter.hasNext()) {
-            return bytesRefIter.next();
-          }
-          return null;
-        }
-      };
-    }
-    return BytesRefIterator.EMPTY;
+  public Set<BytesRef> contexts() {
+    return current.contexts;
   }
 
   @Override

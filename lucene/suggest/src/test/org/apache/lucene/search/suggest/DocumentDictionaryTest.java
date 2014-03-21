@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.lucene.analysis.MockAnalyzer;
 import org.apache.lucene.document.Document;
@@ -225,18 +227,12 @@ public class DocumentDictionaryTest extends LuceneTestCase {
       Field weightField = doc.getField(WEIGHT_FIELD_NAME);
       assertEquals(inputIterator.weight(), (weightField != null) ? weightField.numericValue().longValue() : 0);
       assertTrue(inputIterator.payload().equals(doc.getField(PAYLOAD_FIELD_NAME).binaryValue()));
-      List<BytesRef> oriCtxs = new ArrayList<>();
+      Set<BytesRef> oriCtxs = new HashSet<>();
+      Set<BytesRef> contextSet = inputIterator.contexts();
       for (StorableField ctxf : doc.getFields(CONTEXT_FIELD_NAME)) {
         oriCtxs.add(ctxf.binaryValue());
       }
-      BytesRef ctx;
-      BytesRefIterator ctxIterator = inputIterator.contexts();
-      int ctxCount = 0;
-      while((ctx = ctxIterator.next()) != null) {
-        assertTrue(oriCtxs.contains(ctx));
-        ctxCount++;
-      }
-      assertEquals(oriCtxs.size(), ctxCount);
+      assertEquals(oriCtxs.size(), contextSet.size());
     }
     
     for (String invalidTerm : invalidDocTerms) {

@@ -231,8 +231,7 @@ public class AnalyzingInfixSuggester extends Lookup implements Closeable {
           payload = null;
         }
 
-        BytesRefIterator contexts = (iter.hasContexts()) ? iter.contexts() : BytesRefIterator.EMPTY;
-        add(text, contexts, iter.weight(), payload);
+        add(text, iter.contexts(), iter.weight(), payload);
       }
 
       //System.out.println("initial indexing time: " + ((System.nanoTime()-t0)/1000000) + " msec");
@@ -275,7 +274,7 @@ public class AnalyzingInfixSuggester extends Lookup implements Closeable {
    *  After adding or updating a batch of new suggestions,
    *  you must call {@link #refresh} in the end in order to
    *  see the suggestions in {@link #lookup} */
-  public void add(BytesRef text, BytesRefIterator contexts, long weight, BytesRef payload) throws IOException {
+  public void add(BytesRef text, Set<BytesRef> contexts, long weight, BytesRef payload) throws IOException {
     writer.addDocument(buildDocument(text, contexts, weight, payload));
   }
 
@@ -286,12 +285,12 @@ public class AnalyzingInfixSuggester extends Lookup implements Closeable {
    *  #add} instead.  After adding or updating a batch of
    *  new suggestions, you must call {@link #refresh} in the
    *  end in order to see the suggestions in {@link #lookup} */
-  public void update(BytesRef text, BytesRefIterator contexts, long weight, BytesRef payload) throws IOException {
+  public void update(BytesRef text, Set<BytesRef> contexts, long weight, BytesRef payload) throws IOException {
     writer.updateDocument(new Term(EXACT_TEXT_FIELD_NAME, text.utf8ToString()),
                           buildDocument(text, contexts, weight, payload));
   }
 
-  private Document buildDocument(BytesRef text, BytesRefIterator contexts, long weight, BytesRef payload) throws IOException {
+  private Document buildDocument(BytesRef text, Set<BytesRef> contexts, long weight, BytesRef payload) throws IOException {
     String textString = text.utf8ToString();
     Document doc = new Document();
     FieldType ft = getTextFieldType();
@@ -304,8 +303,7 @@ public class AnalyzingInfixSuggester extends Lookup implements Closeable {
       doc.add(new BinaryDocValuesField("payloads", payload));
     }
     if (contexts != null) {
-      BytesRef context;
-      while((context = contexts.next()) != null) {
+      for(BytesRef context : contexts) {
         // TODO: if we had a BinaryTermField we could fix
         // this "must be valid ut8f" limitation:
         doc.add(new StringField(CONTEXTS_FIELD_NAME, context.utf8ToString(), Field.Store.NO));

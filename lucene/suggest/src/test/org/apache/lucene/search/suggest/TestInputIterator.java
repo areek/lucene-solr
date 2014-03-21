@@ -93,13 +93,7 @@ public class TestInputIterator extends LuceneTestCase {
       assertEquals(entry.getKey(), wrapper.next());
       assertEquals(entry.getValue().getKey().longValue(), wrapper.weight());
       Set<BytesRef> actualCtxs = entry.getValue().getValue();
-      BytesRef ctx;
-      int ctxCount = 0;
-      while((ctx=wrapper.contexts().next())!=null) {
-        assertTrue(actualCtxs.contains(ctx));
-        ctxCount++;
-      }
-      assertEquals(actualCtxs.size(), ctxCount);
+      assertEquals(actualCtxs, wrapper.contexts());
     }
     assertNull(wrapper.next());
     

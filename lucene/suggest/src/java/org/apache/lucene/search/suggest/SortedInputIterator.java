@@ -53,7 +53,7 @@ public class SortedInputIterator implements InputIterator {
   private long weight;
   private final BytesRef scratch = new BytesRef();
   private BytesRef payload = new BytesRef();
-  private BytesRefIterator contexts = BytesRefIterator.EMPTY;
+  private Set<BytesRef> contexts = null;
   
   /**
    * Creates a new sorted wrapper, using {@link
@@ -124,8 +124,8 @@ public class SortedInputIterator implements InputIterator {
   }
   
   @Override
-  public BytesRefIterator contexts() {
-    return (hasContexts) ? contexts : BytesRefIterator.EMPTY;
+  public Set<BytesRef> contexts() {
+    return contexts;
   }
 
   @Override
@@ -213,14 +213,11 @@ public class SortedInputIterator implements InputIterator {
   }
   
   /** encodes an entry (bytes+(payload)+(contexts)+weight) to the provided writer */
-  protected void encode(ByteSequencesWriter writer, ByteArrayDataOutput output, byte[] buffer, BytesRef spare, BytesRef payload, BytesRefIterator contexts, long weight) throws IOException {
+  protected void encode(ByteSequencesWriter writer, ByteArrayDataOutput output, byte[] buffer, BytesRef spare, BytesRef payload, Set<BytesRef> contexts, long weight) throws IOException {
     int requiredLength = spare.length + 8 + ((hasPayloads) ? 2 + payload.length : 0);
-    Set<BytesRef> contextSet = new HashSet<>();
     if(hasContexts) {
-      BytesRef ctxSpare;
-      while((ctxSpare = contexts.next()) != null) {
-        contextSet.add(ctxSpare);
-        requiredLength += 2 + ctxSpare.length;
+      for(BytesRef ctx : contexts) {
+        requiredLength += 2 + ctx.length;
       }
       requiredLength += 2; // for length of contexts
     }
@@ -234,11 +231,11 @@ public class SortedInputIterator implements InputIterator {
       output.writeShort((short) payload.length);
     }
     if (hasContexts) {
-      for (BytesRef ctx : contextSet) {
+      for (BytesRef ctx : contexts) {
         output.writeBytes(ctx.bytes, ctx.offset, ctx.length);
         output.writeShort((short) ctx.length);
       }
-      output.writeShort((short) contextSet.size());
+      output.writeShort((short) contexts.size());
     }
     output.writeLong(weight);
     writer.write(buffer, 0, output.getPosition());
@@ -253,12 +250,12 @@ public class SortedInputIterator implements InputIterator {
   }
   
   /** decodes the contexts at the current position */
-  protected BytesRefIterator decodeContexts(BytesRef scratch, ByteArrayDataInput tmpInput) {
+  protected Set<BytesRef> decodeContexts(BytesRef scratch, ByteArrayDataInput tmpInput) {
     tmpInput.reset(scratch.bytes);
     tmpInput.skipBytes(scratch.length - 2); //skip to context set size
     short ctxSetSize = tmpInput.readShort();
     scratch.length -= 2;
-    final List<BytesRef> contextSet = new ArrayList<>();
+    final Set<BytesRef> contextSet = new HashSet<>();
     for (short i = 0; i < ctxSetSize; i++) {
       tmpInput.setPosition(scratch.length - 2);
       short curContextLength = tmpInput.readShort();
@@ -270,16 +267,7 @@ public class SortedInputIterator implements InputIterator {
       contextSet.add(contextSpare);
       scratch.length -= curContextLength;
     }
-    return new BytesRefIterator() {
-      int idx = 0;
-      @Override
-      public BytesRef next() throws IOException {
-        if(idx < contextSet.size()) {
-          return contextSet.get(idx++);
-        }
-        return null;
-      }
-    };
+    return contextSet;
   }
   
   /** decodes the payload at the current position */

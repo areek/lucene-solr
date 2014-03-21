@@ -268,7 +268,7 @@ public class WFSTCompletionLookup extends Lookup {
     }
 
     @Override
-    protected void encode(ByteSequencesWriter writer, ByteArrayDataOutput output, byte[] buffer, BytesRef spare, BytesRef payload, BytesRefIterator contexts, long weight) throws IOException {
+    protected void encode(ByteSequencesWriter writer, ByteArrayDataOutput output, byte[] buffer, BytesRef spare, BytesRef payload, Set<BytesRef> contexts, long weight) throws IOException {
       if (spare.length + 4 >= buffer.length) {
         buffer = ArrayUtil.grow(buffer, spare.length + 4);
       }

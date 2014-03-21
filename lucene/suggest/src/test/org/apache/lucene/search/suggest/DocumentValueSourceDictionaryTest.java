@@ -160,17 +160,11 @@ public class DocumentValueSourceDictionaryTest extends LuceneTestCase {
       assertTrue(f.equals(new BytesRef(doc.get(FIELD_NAME))));
       assertEquals(inputIterator.weight(), (w1 + w2 + w3));
       assertTrue(inputIterator.payload().equals(doc.getField(PAYLOAD_FIELD_NAME).binaryValue()));
-      List<BytesRef> originalCtxs = new ArrayList<>();
+      Set<BytesRef> originalCtxs = new HashSet<>();
       for (Field ctxf: doc.getFields(CONTEXTS_FIELD_NAME)) {
         originalCtxs.add(ctxf.binaryValue());
       }
-      BytesRef ctx;
-      int ctxCount = 0;
-      while((ctx = inputIterator.contexts().next()) != null) {
-        assertTrue(originalCtxs.contains(ctx));
-        ctxCount++;
-      }
-      assertEquals(originalCtxs.size(), ctxCount);
+      assertEquals(originalCtxs, inputIterator.contexts());
     }
     assertTrue(docs.isEmpty());
     ir.close();

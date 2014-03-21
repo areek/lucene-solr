@@ -18,6 +18,7 @@
 package org.apache.lucene.search.spell;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.TermsEnum;
@@ -111,8 +112,8 @@ public class HighFrequencyDictionary implements Dictionary {
     }
 
     @Override
-    public BytesRefIterator contexts() {
-      return BytesRefIterator.EMPTY;
+    public Set<BytesRef> contexts() {
+      return null;
     }
 
     @Override

@@ -19,6 +19,7 @@ package org.apache.lucene.search.suggest;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefIterator;
@@ -78,11 +79,11 @@ public class UnsortedInputIterator extends BufferedInputIterator {
   }
   
   @Override
-  public BytesRefIterator contexts() {
+  public Set<BytesRef> contexts() {
     if (hasContexts() && curPos < contextSets.size()) {
       assert currentOrd == ords[curPos];
       return contextSets.get(currentOrd);
     }
-    return BytesRefIterator.EMPTY;
+    return null;
   }
 }

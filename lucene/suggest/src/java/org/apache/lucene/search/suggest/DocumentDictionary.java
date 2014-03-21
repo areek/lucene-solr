@@ -114,7 +114,7 @@ public class DocumentDictionary implements Dictionary {
     private int currentDocId = -1;
     private long currentWeight = 0;
     private BytesRef currentPayload = null;
-    private BytesRefIterator currentContexts = BytesRefIterator.EMPTY;
+    private Set<BytesRef> currentContexts;
     private final NumericDocValues weightValues;
     
     /**
@@ -148,7 +148,7 @@ public class DocumentDictionary implements Dictionary {
         
         BytesRef tempPayload = null;
         BytesRef tempTerm = null;
-        BytesRefIterator tempContexts = BytesRefIterator.EMPTY;
+        Set<BytesRef> tempContexts = new HashSet<>();
         
         if (hasPayloads) {
           StorableField payload = doc.getField(payloadField);
@@ -160,22 +160,12 @@ public class DocumentDictionary implements Dictionary {
         
         if (hasContexts) {
           final StorableField[] contextFields = doc.getFields(contextsField);
-          if (contextFields.length != 0) {
-            tempContexts = new BytesRefIterator() {
-              int idx = 0;
-              @Override
-              public BytesRef next() throws IOException {
-                while (idx < contextFields.length) {
-                  StorableField context = contextFields[idx++];
-                  if (context.binaryValue() == null && context.stringValue() == null) {
-                    continue;
-                  } else {
-                    return (context.binaryValue() != null) ? context.binaryValue() : new BytesRef(context.stringValue());
-                  }
-                }
-                return null;
-              }
-            };
+          for (StorableField contextField : contextFields) {
+            if (contextField.binaryValue() == null && contextField.stringValue() == null) {
+              continue;
+            } else {
+              tempContexts.add((contextField.binaryValue() != null) ? contextField.binaryValue() : new BytesRef(contextField.stringValue()));
+            }
           }
         }
         
@@ -232,11 +222,11 @@ public class DocumentDictionary implements Dictionary {
     }
 
     @Override
-    public BytesRefIterator contexts() {
+    public Set<BytesRef> contexts() {
       if (hasContexts) {
         return currentContexts;
       }
-      return BytesRefIterator.EMPTY;
+      return null;
     }
 
     @Override
