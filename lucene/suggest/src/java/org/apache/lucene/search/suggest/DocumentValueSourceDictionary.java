@@ -77,7 +77,7 @@ public class DocumentValueSourceDictionary extends DocumentDictionary {
   public DocumentValueSourceDictionary(IndexReader reader, String field,
                                        ValueSource weightsValueSource, String payload, String contexts) {
     super(reader, field, null, payload, contexts);
-    this.weightsValueSource = weightsValueSource;  
+    this.weightsValueSource = weightsValueSource;
   }
   /**
    * Creates a new dictionary with the contents of the fields named <code>field</code>
@@ -88,7 +88,7 @@ public class DocumentValueSourceDictionary extends DocumentDictionary {
   public DocumentValueSourceDictionary(IndexReader reader, String field,
                                        ValueSource weightsValueSource, String payload) {
     super(reader, field, null, payload);
-    this.weightsValueSource = weightsValueSource;  
+    this.weightsValueSource = weightsValueSource;
   }
   
   /** 
@@ -116,7 +116,7 @@ public class DocumentValueSourceDictionary extends DocumentDictionary {
     private final int[] starts;
     /** current leave index */
     private int currentLeafIndex = 0;
-    
+
     public DocumentValueSourceInputIterator(boolean hasPayloads, boolean hasContexts)
         throws IOException {
       super(hasPayloads, hasContexts);

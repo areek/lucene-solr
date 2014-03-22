@@ -22,7 +22,6 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefIterator;
 
 /**
  * This wrapper buffers the incoming elements and makes sure they are in

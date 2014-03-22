@@ -288,7 +288,7 @@ public class FreeTextSuggester extends Lookup {
     if (iterator.hasPayloads()) {
       throw new IllegalArgumentException("this suggester doesn't support payloads");
     }
-    if(iterator.hasContexts()) {
+    if (iterator.hasContexts()) {
       throw new IllegalArgumentException("this suggester doesn't support contexts");
     }
 

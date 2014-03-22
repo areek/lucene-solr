@@ -19,17 +19,14 @@ package org.apache.lucene.search.suggest;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.store.ByteArrayDataOutput;
 import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefIterator;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.OfflineSorter;
 import org.apache.lucene.util.OfflineSorter.ByteSequencesReader;
@@ -215,7 +212,7 @@ public class SortedInputIterator implements InputIterator {
   /** encodes an entry (bytes+(payload)+(contexts)+weight) to the provided writer */
   protected void encode(ByteSequencesWriter writer, ByteArrayDataOutput output, byte[] buffer, BytesRef spare, BytesRef payload, Set<BytesRef> contexts, long weight) throws IOException {
     int requiredLength = spare.length + 8 + ((hasPayloads) ? 2 + payload.length : 0);
-    if(hasContexts) {
+    if (hasContexts) {
       for(BytesRef ctx : contexts) {
         requiredLength += 2 + ctx.length;
       }

@@ -83,7 +83,7 @@ public class DocumentDictionary implements Dictionary {
   public DocumentDictionary(IndexReader reader, String field, String weightField, String payloadField) {
     this(reader, field, weightField, payloadField, null);
   }
-  
+
   /**
    * Creates a new dictionary with the contents of the fields named <code>field</code>
    * for the terms, <code>weightField</code> for the weights that will be used for the 
@@ -97,7 +97,7 @@ public class DocumentDictionary implements Dictionary {
     this.payloadField = payloadField;
     this.contextsField = contextsField;
   }
-  
+
   @Override
   public InputIterator getEntryIterator() throws IOException {
     return new DocumentInputIterator(payloadField!=null, contextsField!=null);
@@ -116,7 +116,7 @@ public class DocumentDictionary implements Dictionary {
     private BytesRef currentPayload = null;
     private Set<BytesRef> currentContexts;
     private final NumericDocValues weightValues;
-    
+
     /**
      * Creates an iterator over term, weight and payload fields from the lucene
      * index. setting <code>withPayload</code> to false, implies an iterator
@@ -145,11 +145,11 @@ public class DocumentDictionary implements Dictionary {
         }
 
         StoredDocument doc = reader.document(currentDocId, relevantFields);
-        
+
         BytesRef tempPayload = null;
         BytesRef tempTerm = null;
         Set<BytesRef> tempContexts = new HashSet<>();
-        
+
         if (hasPayloads) {
           StorableField payload = doc.getField(payloadField);
           if (payload == null || (payload.binaryValue() == null && payload.stringValue() == null)) {
@@ -157,7 +157,7 @@ public class DocumentDictionary implements Dictionary {
           }
           tempPayload = (payload.binaryValue() != null) ? payload.binaryValue() : new BytesRef(payload.stringValue());
         }
-        
+
         if (hasContexts) {
           final StorableField[] contextFields = doc.getFields(contextsField);
           for (StorableField contextField : contextFields) {
@@ -168,17 +168,17 @@ public class DocumentDictionary implements Dictionary {
             }
           }
         }
-        
+
         StorableField fieldVal = doc.getField(field);
         if (fieldVal == null || (fieldVal.binaryValue() == null && fieldVal.stringValue() == null)) {
           continue;
         }
         tempTerm = (fieldVal.stringValue() != null) ? new BytesRef(fieldVal.stringValue()) : fieldVal.binaryValue();
-        
+
         currentPayload = tempPayload;
         currentContexts = tempContexts;
         currentWeight = getWeight(doc, currentDocId);
-        
+
         return tempTerm;
       }
       return null;

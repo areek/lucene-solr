@@ -25,7 +25,6 @@ import java.util.Set;
 import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefArray;
-import org.apache.lucene.util.BytesRefIterator;
 import org.apache.lucene.util.Counter;
 
 /**
@@ -48,7 +47,7 @@ public class BufferedInputIterator implements InputIterator {
   private final BytesRef payloadSpare = new BytesRef();
   private final boolean hasPayloads;
   private final boolean hasContexts;
-  
+
   /** Creates a new iterator, buffering entries from the specified iterator */
   public BufferedInputIterator(InputIterator source) throws IOException {
     BytesRef spare;
