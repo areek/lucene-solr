@@ -17,13 +17,11 @@ package org.apache.lucene.search.suggest;
  * limitations under the License.
  */
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefIterator;
 
 /**
  * A {@link InputIterator} over a sequence of {@link Input}s.
