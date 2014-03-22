@@ -89,7 +89,6 @@ public class TestInputIterator extends LuceneTestCase {
     Iterator<Map.Entry<BytesRef, SimpleEntry<Long, Set<BytesRef>>>> actualEntries = sortedWithContext.entrySet().iterator();
     while (actualEntries.hasNext()) {
       Map.Entry<BytesRef, SimpleEntry<Long, Set<BytesRef>>> entry = actualEntries.next();
-      
       assertEquals(entry.getKey(), wrapper.next());
       assertEquals(entry.getValue().getKey().longValue(), wrapper.weight());
       Set<BytesRef> actualCtxs = entry.getValue().getValue();

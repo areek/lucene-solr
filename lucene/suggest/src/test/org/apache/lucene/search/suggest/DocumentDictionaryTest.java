@@ -26,7 +26,6 @@ import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.search.suggest.DocumentDictionary;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefIterator;
 import org.apache.lucene.util.LuceneTestCase;
 import org.junit.Test;
 
