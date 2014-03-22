@@ -45,7 +45,10 @@ public interface InputIterator extends BytesRefIterator {
   /** Returns true if the iterator has payloads */
   public boolean hasPayloads();
   
-  /** A term's contexts context can be used to filter suggestions*/
+  /** 
+   * A term's contexts context can be used to filter suggestions.
+   * May return null, if suggest entries do not have any context
+   * */
   public Set<BytesRef> contexts();
   
   /** Returns true if the iterator has contexts */
