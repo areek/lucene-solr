@@ -27,7 +27,6 @@ import org.apache.lucene.index.ReaderUtil;
 import org.apache.lucene.index.StoredDocument;
 import org.apache.lucene.queries.function.FunctionValues;
 import org.apache.lucene.queries.function.ValueSource;
-import org.apache.lucene.util.BytesRefIterator;
 
 
 /**

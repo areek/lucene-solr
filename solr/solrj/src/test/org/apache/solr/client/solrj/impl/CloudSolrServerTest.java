@@ -30,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+
 import org.apache.lucene.util.LuceneTestCase.Slow;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
@@ -39,6 +40,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.cloud.AbstractFullDistribZkTestBase;
 import org.apache.solr.cloud.AbstractZkTestCase;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.cloud.ClusterState;
 import org.apache.solr.common.cloud.DocCollection;
@@ -107,7 +109,7 @@ public class CloudSolrServerTest extends AbstractFullDistribZkTestBase {
   public CloudSolrServerTest() {
     super();
     sliceCount = 2;
-    shardCount = 4;
+    shardCount = 3;
   }
   
   @Override
@@ -234,9 +236,16 @@ public class CloudSolrServerTest extends AbstractFullDistribZkTestBase {
         expectedBaseURLs.size() < requestCountsMap.size());
 
     // Calculate a number of shard keys that route to the same shard.
+    int n;
+    if (TEST_NIGHTLY) {
+      n = random().nextInt(999) + 1;
+    } else {
+      n = random().nextInt(9) + 1;
+    }
+    
     List<String> sameShardRoutes = Lists.newArrayList();
     sameShardRoutes.add("0");
-    for (int i = 1; i < 1000; i++) {
+    for (int i = 1; i < n; i++) {
       String shardKey = Integer.toString(i);
       Collection<Slice> slices = router.getSearchSlicesSingle(shardKey, null, col);
       if (expectedSlices.equals(slices)) {
@@ -246,8 +255,8 @@ public class CloudSolrServerTest extends AbstractFullDistribZkTestBase {
 
     assertTrue(sameShardRoutes.size() > 1);
 
-    // Do 1000 queries with _route_ parameter to the same shard
-    for (int i = 0; i < 1000; i++) {
+    // Do N queries with _route_ parameter to the same shard
+    for (int i = 0; i < n; i++) {
       ModifiableSolrParams solrParams = new ModifiableSolrParams();
       solrParams.set(CommonParams.Q, "*:*");
       solrParams.set(ShardParams._ROUTE_, sameShardRoutes.get(random().nextInt(sameShardRoutes.size())));
@@ -276,7 +285,7 @@ public class CloudSolrServerTest extends AbstractFullDistribZkTestBase {
       }
     }
 
-    assertEquals("Unexpected number of requests to expected URLs", 1000, increaseFromExpectedUrls);
+    assertEquals("Unexpected number of requests to expected URLs", n, increaseFromExpectedUrls);
     assertEquals("Unexpected number of requests to unexpected URLs: " + numRequestsToUnexpectedUrls,
         0, increaseFromUnexpectedUrls);
 
@@ -316,7 +325,7 @@ public class CloudSolrServerTest extends AbstractFullDistribZkTestBase {
       server.setZkConnectTimeout(100);
       server.connect();
       fail("Expected exception");
-    } catch (RuntimeException e) {
+    } catch (SolrException e) {
       assertTrue(e.getCause() instanceof TimeoutException);
     } finally {
       server.shutdown();

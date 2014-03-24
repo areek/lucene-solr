@@ -45,7 +45,6 @@ import org.apache.lucene.store.MockDirectoryWrapper;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.apache.lucene.util.TestUtil;
-import org.apache.lucene.util.TestUtil;
 
 public class TestIndexWriterDelete extends LuceneTestCase {
 
@@ -525,6 +524,7 @@ public class TestIndexWriterDelete extends LuceneTestCase {
       }
       MockDirectoryWrapper dir = new MockDirectoryWrapper(random(), new RAMDirectory(startDir, newIOContext(random())));
       dir.setPreventDoubleWrite(false);
+      dir.setAllowRandomFileNotFoundException(false);
       IndexWriter modifier = new IndexWriter(dir,
                                              newIndexWriterConfig(
                                                                   TEST_VERSION_CURRENT, new MockAnalyzer(random(), MockTokenizer.WHITESPACE, false))
@@ -727,7 +727,8 @@ public class TestIndexWriterDelete extends LuceneTestCase {
             boolean seen = false;
             StackTraceElement[] trace = new Exception().getStackTrace();
             for (int i = 0; i < trace.length; i++) {
-              if ("applyDeletesAndUpdates".equals(trace[i].getMethodName())) {
+              if ("applyDeletesAndUpdates".equals(trace[i].getMethodName()) ||
+                  "slowFileExists".equals(trace[i].getMethodName())) {
                 seen = true;
                 break;
               }
@@ -1042,7 +1043,7 @@ public class TestIndexWriterDelete extends LuceneTestCase {
       w.updateDocument(delTerm, doc);
       // Eventually segment 0 should get a del docs:
       // TODO: fix this test
-      if (dir.fileExists("_0_1.del") || dir.fileExists("_0_1.liv") ) {
+      if (slowFileExists(dir, "_0_1.del") || slowFileExists(dir, "_0_1.liv") ) {
         if (VERBOSE) {
           System.out.println("TEST: deletes created @ count=" + count);
         }
@@ -1088,7 +1089,7 @@ public class TestIndexWriterDelete extends LuceneTestCase {
       w.updateDocument(delTerm, doc);
       // Eventually segment 0 should get a del docs:
       // TODO: fix this test
-      if (dir.fileExists("_0_1.del") || dir.fileExists("_0_1.liv")) {
+      if (slowFileExists(dir, "_0_1.del") || slowFileExists(dir, "_0_1.liv")) {
         break;
       }
       count++;
@@ -1135,7 +1136,7 @@ public class TestIndexWriterDelete extends LuceneTestCase {
       w.updateDocument(new Term("id", ""+id), doc);
       docsInSegment.incrementAndGet();
       // TODO: fix this test
-      if (dir.fileExists("_0_1.del") || dir.fileExists("_0_1.liv")) {
+      if (slowFileExists(dir, "_0_1.del") || slowFileExists(dir, "_0_1.liv")) {
         if (VERBOSE) {
           System.out.println("TEST: deletes created @ id=" + id);
         }

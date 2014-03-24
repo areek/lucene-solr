@@ -28,6 +28,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -40,6 +44,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.entity.ContentType;
@@ -68,6 +73,7 @@ import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.common.util.SolrjNamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,6 +207,49 @@ public class HttpSolrServer extends SolrServer {
   
   public NamedList<Object> request(final SolrRequest request, final ResponseParser processor) throws SolrServerException, IOException {
     return executeMethod(createMethod(request),processor);
+  }
+  
+  /**
+   * @lucene.experimental
+   */
+  public static class HttpUriRequestResponse {
+    public HttpUriRequest httpUriRequest;
+    public Future<NamedList<Object>> future;
+  }
+  
+  /**
+   * @lucene.experimental
+   */
+  public HttpUriRequestResponse httpUriRequest(final SolrRequest request)
+      throws SolrServerException, IOException {
+    ResponseParser responseParser = request.getResponseParser();
+    if (responseParser == null) {
+      responseParser = parser;
+    }
+    return httpUriRequest(request, responseParser);
+  }
+  
+  /**
+   * @lucene.experimental
+   */
+  public HttpUriRequestResponse httpUriRequest(final SolrRequest request, final ResponseParser processor) throws SolrServerException, IOException {
+    HttpUriRequestResponse mrr = new HttpUriRequestResponse();
+    final HttpRequestBase method = createMethod(request);
+    ExecutorService pool = Executors.newFixedThreadPool(1, new SolrjNamedThreadFactory("httpUriRequest"));
+    try {
+      mrr.future = pool.submit(new Callable<NamedList<Object>>(){
+
+        @Override
+        public NamedList<Object> call() throws Exception {
+          return executeMethod(method, processor);
+        }});
+ 
+    } finally {
+      pool.shutdown();
+    }
+    assert method != null;
+    mrr.httpUriRequest = method;
+    return mrr;
   }
   
   protected HttpRequestBase createMethod(final SolrRequest request) throws IOException, SolrServerException {

@@ -29,7 +29,6 @@ import org.apache.lucene.index.StoredDocument;
 import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefIterator;
 
 /**
  * <p>

@@ -74,6 +74,8 @@ public class MockDirectoryWrapper extends BaseDirectoryWrapper {
   boolean preventDoubleWrite = true;
   boolean trackDiskUsage = false;
   boolean wrapLockFactory = true;
+  boolean allowRandomFileNotFoundException = true;
+  boolean allowReadingFilesStillOpenForWrite = false;
   private Set<String> unSyncedFiles;
   private Set<String> createdFiles;
   private Set<String> openFilesForWrite = new HashSet<>();
@@ -137,7 +139,21 @@ public class MockDirectoryWrapper extends BaseDirectoryWrapper {
   public void setPreventDoubleWrite(boolean value) {
     preventDoubleWrite = value;
   }
+
+  /** If set to true (the default), when we throw random
+   *  IOException on openInput or createOutput, we may
+   *  sometimes throw FileNotFoundException or
+   *  NoSuchFileException. */
+  public void setAllowRandomFileNotFoundException(boolean value) {
+    allowRandomFileNotFoundException = value;
+  }
   
+  /** If set to true, you can open an inputstream on a file
+   *  that is still open for writes. */
+  public void setAllowReadingFilesStillOpenForWrite(boolean value) {
+    allowReadingFilesStillOpenForWrite = value;
+  }
+
   /**
    * Enum for controlling hard disk throttling.
    * Set via {@link MockDirectoryWrapper #setThrottling(Throttling)}
@@ -251,7 +267,7 @@ public class MockDirectoryWrapper extends BaseDirectoryWrapper {
         String tempFileName;
         while (true) {
           tempFileName = ""+randomState.nextInt();
-          if (!in.fileExists(tempFileName)) {
+          if (!LuceneTestCase.slowFileExists(in, tempFileName)) {
             break;
           }
         }
@@ -379,7 +395,7 @@ public class MockDirectoryWrapper extends BaseDirectoryWrapper {
         System.out.println(Thread.currentThread().getName() + ": MockDirectoryWrapper: now throw random exception during open file=" + name);
         new Throwable().printStackTrace(System.out);
       }
-      if (randomState.nextBoolean()) {
+      if (allowRandomFileNotFoundException == false || randomState.nextBoolean()) {
         throw new IOException("a random IOException (" + name + ")");
       } else {
         throw randomState.nextBoolean() ? new FileNotFoundException("a random IOException (" + name + ")") : new NoSuchFileException("a random IOException (" + name + ")");
@@ -549,13 +565,13 @@ public class MockDirectoryWrapper extends BaseDirectoryWrapper {
     if (failOnOpenInput) {
       maybeThrowDeterministicException();
     }
-    if (!in.fileExists(name)) {
+    if (!LuceneTestCase.slowFileExists(in, name)) {
       throw randomState.nextBoolean() ? new FileNotFoundException(name + " in dir=" + in) : new NoSuchFileException(name + " in dir=" + in);
     }
 
     // cannot open a file for input if it's still open for
     // output, except for segments.gen and segments_N
-    if (openFilesForWrite.contains(name) && !name.startsWith("segments")) {
+    if (!allowReadingFilesStillOpenForWrite && openFilesForWrite.contains(name) && !name.startsWith("segments")) {
       throw (IOException) fillOpenTrace(new IOException("MockDirectoryWrapper: file \"" + name + "\" is still open for writing"), name, false);
     }
 
@@ -865,12 +881,6 @@ public class MockDirectoryWrapper extends BaseDirectoryWrapper {
   }
 
   @Override
-  public synchronized boolean fileExists(String name) throws IOException {
-    maybeYield();
-    return in.fileExists(name);
-  }
-
-  @Override
   public synchronized long fileLength(String name) throws IOException {
     maybeYield();
     return in.fileLength(name);
@@ -925,7 +935,7 @@ public class MockDirectoryWrapper extends BaseDirectoryWrapper {
   public IndexInputSlicer createSlicer(final String name, IOContext context)
       throws IOException {
     maybeYield();
-    if (!in.fileExists(name)) {
+    if (!LuceneTestCase.slowFileExists(in, name)) {
       throw randomState.nextBoolean() ? new FileNotFoundException(name) : new NoSuchFileException(name);
     }
     // cannot open a file for input if it's still open for
@@ -1001,4 +1011,5 @@ public class MockDirectoryWrapper extends BaseDirectoryWrapper {
    *  e.g. from {@link MockDirectoryWrapper.Failure}. */
   public static class FakeIOException extends IOException {
   }
+
 }
