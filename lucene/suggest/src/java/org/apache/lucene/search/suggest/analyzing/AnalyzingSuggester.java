@@ -380,9 +380,10 @@ public class AnalyzingSuggester extends Lookup {
 
   @Override
   public void build(InputIterator iterator) throws IOException {
-    if (iterator.hasContexts()) {
-      throw new IllegalArgumentException("this suggester doesn't support contexts");
-    }
+    //TODO: REMOVE
+    //if (iterator.hasContexts()) {
+    //  throw new IllegalArgumentException("this suggester doesn't support contexts");
+    //}
     String prefix = getClass().getSimpleName();
     File directory = OfflineSorter.defaultTempDir();
     File tempInput = File.createTempFile(prefix, ".input", directory);
