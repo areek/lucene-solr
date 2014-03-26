@@ -115,7 +115,13 @@ public class ContextAwareSuggester extends Lookup {
               maxGraphExpansions, preservePositionIncrements, maxEdits, transpositions, nonFuzzyPrefix, 
               minFuzzyLength, unicodeAware) : 
           new AnalyzingSuggester(indexAnalyzer, queryAnalyzer, options, maxSurfaceFormsPerAnalyzedForm, 
-              maxGraphExpansions, preservePositionIncrements);
+              maxGraphExpansions, preservePositionIncrements) {
+            @Override
+            protected String getPrefix() {
+              return getClass().getSimpleName();
+            }
+            
+  };
     }
   }
   
@@ -331,6 +337,7 @@ public class ContextAwareSuggester extends Lookup {
       for(BytesRef context : globalContexts) {
         AnalyzingSuggester suggester = suggesterConfig.constructSuggester();
         suggesterMap.put(context.utf8ToString(), suggester);
+        /*
         BytesRef f;
         InputIterator i = new FilteredContextInputIterator(tempInput, context, hasPayloads);
         while((f = i.next()) != null) {
@@ -340,6 +347,7 @@ public class ContextAwareSuggester extends Lookup {
          // for (BytesRef ctx : i.contexts())
           //System.out.println(ctx.utf8ToString());
         }
+        */
         
         suggester.build(new FilteredContextInputIterator(tempInput, context, hasPayloads));
       }
@@ -366,7 +374,7 @@ public class ContextAwareSuggester extends Lookup {
     for (BytesRef ctx : contexts) {
       AnalyzingSuggester suggester = suggesterMap.get(ctx.utf8ToString());
       if (suggester != null) {
-        for (LookupResult lookupResult : suggester.lookup(key, onlyMorePopular, num)) {
+        for (LookupResult lookupResult : suggester.lookup(key, contexts, onlyMorePopular, num)) {
           lookupResults.insertWithOverflow(lookupResult);
         }
       }

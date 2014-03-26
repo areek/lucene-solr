@@ -645,7 +645,6 @@ public class AnalyzingSuggester extends Lookup {
   @Override
   public List<LookupResult> lookup(final CharSequence key, Set<BytesRef> contexts, boolean onlyMorePopular, int num) {
     assert num > 0;
-
     if (onlyMorePopular) {
       throw new IllegalArgumentException("this suggester only works with onlyMorePopular=false");
     }

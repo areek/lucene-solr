@@ -2,7 +2,10 @@ package org.apache.lucene.search.suggest.analyzing;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.MockAnalyzer;
@@ -33,11 +36,19 @@ import org.apache.lucene.util.TestUtil;
 
 public class ContextAwareSuggesterTest extends LuceneTestCase {
   
+  private static Set<BytesRef> asContexts(String... vals) {
+    Set<BytesRef> contexts = new HashSet<>();
+    for (String v : vals) {
+      contexts.add(new BytesRef(v));
+    }
+    return contexts;
+  }
+  
   public void testBasicContext() throws IOException {
     
     Input keys[] = new Input[] {
-        new Input("lend me your ear", 8, new BytesRef("foobar"), asSet( new BytesRef("foo"), new BytesRef("bar"))),
-        new Input("a penny saved is a penny earned", 10, new BytesRef("foobaz"), asSet(new BytesRef("foo"), new BytesRef( "baz")))
+        new Input("lend me your ear", 8, new BytesRef("foobar"), asContexts("foo", "bar")),
+        new Input("a penny saved is a penny earned", 10, new BytesRef("foobaz"), asContexts("foo", "baz"))
         };
     
     ContextAwareSuggester suggester;
@@ -47,7 +58,7 @@ public class ContextAwareSuggesterTest extends LuceneTestCase {
     
     // No context provided, all results returned
     List<LookupResult> results = suggester.lookup(
-        TestUtil.stringToCharSequence("lend", random()), asSet(new BytesRef("foo")), false, 10);
+        TestUtil.stringToCharSequence("lend", random()), asContexts("foo"), false, 10);
     assertEquals(1, results.size());
     
     LookupResult result = results.get(0);
