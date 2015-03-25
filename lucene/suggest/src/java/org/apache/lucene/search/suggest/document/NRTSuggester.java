@@ -49,8 +49,8 @@ import static org.apache.lucene.search.suggest.document.NRTSuggester.PayLoadProc
 
 /**
  * <p>
- * NRTSuggester returns Top N documents that has a completion matching a provided automaton.
- * The documents are returned in descending order of their corresponding completion weight.
+ * NRTSuggester returns Top N completions with corresponding documents matching a provided automaton.
+ * The completions are returned in descending order of their corresponding weight.
  * Deleted documents are filtered out in near real time using the provided reader.
  * A {@link org.apache.lucene.search.DocIdSet} can be passed in at query time to filter out documents.
  * </p>
@@ -63,7 +63,7 @@ import static org.apache.lucene.search.suggest.document.NRTSuggester.PayLoadProc
  * <p>
  * FST Format:
  * <ul>
- *   <li>Input: analyzed forms of input terms (provided automaton is intersected with these)</li>
+ *   <li>Input: analyzed forms of input terms</li>
  *   <li>Output: Pair&lt;Long, BytesRef&gt; containing weight, surface form and docID</li>
  * </ul>
  * <p>
@@ -142,19 +142,15 @@ public class NRTSuggester implements Accountable {
   }
 
   /**
-   * Collects at most <code>num</code> hits filtered by <code>filter</code> with
-   * completion entry prefixes that complete to <code>automaton</code>
+   * Collects at most Top <code>num</code> completions, filtered by <code>filter</code> on
+   * corresponding documents, which has a prefix accepted by <code>automaton</code>
    * <p>
    * Supports near real time deleted document filtering using <code>reader</code>
    * <p>
-   * if the <code>collector</code> is an instance of {@link TopSuggestDocsCollector}
-   * then {@link TopSuggestDocsCollector#collect(int, CharSequence, long)} is called
-   * for every hit
-   * otherwise {@link org.apache.lucene.search.LeafCollector#collect(int)} is called for every hit
+   * {@link TopSuggestDocsCollector#collect(int, CharSequence, long)} is called
+   * for every matched completion
    * <p>
-   * Hit collection can be early terminated by throwing {@link org.apache.lucene.search.CollectionTerminatedException}
-   *
-   * @lucene.experimental
+   * Completion collection can be early terminated by throwing {@link org.apache.lucene.search.CollectionTerminatedException}
    */
   public void lookup(final LeafReader reader, final Automaton automaton, final int num, final DocIdSet filter, final TopSuggestDocsCollector collector) {
     final Bits filterDocs;
@@ -181,7 +177,6 @@ public class NRTSuggester implements Accountable {
     }
 
     final Bits liveDocs = reader.getLiveDocs();
-
     try {
       final List<FSTUtil.Path<Pair<Long, BytesRef>>> prefixPaths = FSTUtil.intersectPrefixPaths(automaton, fst);
       Util.TopNSearcher<Pair<Long, BytesRef>> searcher = new Util.TopNSearcher<Pair<Long, BytesRef>>(fst, num, queueSize, getComparator()) {
@@ -241,7 +236,10 @@ public class NRTSuggester implements Accountable {
    * This heuristic will try to make the searcher admissible, but the search
    * can still lead to over-pruning
    * <p>
-   * In case a filter has to be applied, the queue size is doubled
+   * If a <code>filter</code> is applied, the queue size is increased by
+   * half the number of live documents.
+   * <p>
+   * The maximum queue size is {@link #MAX_TOP_N_QUEUE_SIZE}
    */
   private int getMaxTopNSearcherQueueSize(int num, LeafReader reader, boolean filterEnabled) {
     double liveDocsRatio = calculateLiveDocRatio(reader.numDocs(), reader.maxDoc());

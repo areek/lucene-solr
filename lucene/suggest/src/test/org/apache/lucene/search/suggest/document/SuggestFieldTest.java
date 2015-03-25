@@ -21,13 +21,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -38,11 +35,9 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.codecs.lucene50.Lucene50Codec;
-import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
-import org.apache.lucene.index.BaseDocValuesFormatTestCase;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -72,6 +67,7 @@ import org.junit.Test;
 import static org.apache.lucene.search.suggest.document.TopSuggestDocs.*;
 import static org.hamcrest.core.IsEqual.equalTo;
 
+//@Seed(value = "F4D6B8DD5B7E6C15")
 public class SuggestFieldTest extends LuceneTestCase {
 
   public Directory dir;
@@ -161,13 +157,11 @@ public class SuggestFieldTest extends LuceneTestCase {
       document.add(newSuggestField("suggest_field", "abc", weights[i]));
       iw.addDocument(document);
     }
-
     if (rarely()) {
       iw.commit();
     }
 
     DirectoryReader reader = iw.getReader();
-
     Entry[] expectedEntries = new Entry[num];
     Arrays.sort(weights);
     for (int i = 1; i <= num; i++) {
@@ -331,14 +325,89 @@ public class SuggestFieldTest extends LuceneTestCase {
       document.clear();
     }
 
-    int topScore = num/2;
-    QueryWrapperFilter filterWrapper = new QueryWrapperFilter(NumericRangeQuery.newIntRange("filter_int_fld", 0, topScore, true, true));
-    Filter filter = randomAccessFilter(filterWrapper);
     DirectoryReader reader = iw.getReader();
     SuggestIndexSearcher indexSearcher = new SuggestIndexSearcher(reader, analyzer);
 
+    int topScore = num/2;
+    QueryWrapperFilter filterWrapper = new QueryWrapperFilter(NumericRangeQuery.newIntRange("filter_int_fld", 0, topScore, true, true));
+    Filter filter = randomAccessFilter(filterWrapper);
+    // if at most half of the top scoring documents have been filtered out
+    // the search should be admissible
     TopSuggestDocs suggest = indexSearcher.suggest("suggest_field", "abc_", 1, filter);
     assertSuggestions(suggest, new Entry("abc_" + topScore, topScore));
+
+    filterWrapper = new QueryWrapperFilter(NumericRangeQuery.newIntRange("filter_int_fld", 0, 0, true, true));
+    filter = randomAccessFilter(filterWrapper);
+    // if more than half of the top scoring documents have been filtered out
+    // search is not admissible, so # of suggestions requested is num instead of 1
+    suggest = indexSearcher.suggest("suggest_field", "abc_", num, filter);
+    assertSuggestions(suggest, new Entry("abc_0", 0));
+
+    filterWrapper = new QueryWrapperFilter(NumericRangeQuery.newIntRange("filter_int_fld", num - 1, num - 1, true, true));
+    filter = randomAccessFilter(filterWrapper);
+    // if only lower scoring documents are filtered out
+    // search is admissible
+    suggest = indexSearcher.suggest("suggest_field", "abc_", 1, filter);
+    assertSuggestions(suggest, new Entry("abc_" + (num - 1), num - 1));
+
+    reader.close();
+    iw.close();
+  }
+
+  @Test
+  public void testEarlyTermination() throws Exception {
+    Analyzer analyzer = new MockAnalyzer(random());
+    RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
+    int num = atLeast(10);
+    Document document = new Document();
+
+    // have segments of 4 documents
+    // with descending suggestion weights
+    // suggest should early terminate for
+    // segments with docs having lower suggestion weights
+    for (int i = num; i > 0; i--) {
+      document.add(newSuggestField("suggest_field", "abc_" + i, i));
+      iw.addDocument(document);
+      document.clear();
+      if (i % 4 == 0) {
+        iw.commit();
+      }
+    }
+    DirectoryReader reader = iw.getReader();
+    SuggestIndexSearcher indexSearcher = new SuggestIndexSearcher(reader, analyzer);
+    TopSuggestDocs suggest = indexSearcher.suggest("suggest_field", "abc_", 1);
+    assertSuggestions(suggest, new Entry("abc_" + num, num));
+
+    reader.close();
+    iw.close();
+  }
+
+  @Test
+  public void testMultipleSegments() throws Exception {
+    Analyzer analyzer = new MockAnalyzer(random());
+    RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
+    int num = atLeast(10);
+    Document document = new Document();
+    List<Entry> entries = new ArrayList<>();
+
+    // ensure at least some segments have no suggest field
+    for (int i = num; i > 0; i--) {
+      if (random().nextInt(4) == 1) {
+        document.add(newSuggestField("suggest_field", "abc_" + i, i));
+        entries.add(new Entry("abc_" + i, i));
+      }
+      document.add(new IntField("weight_fld", i, Field.Store.YES));
+      iw.addDocument(document);
+      document.clear();
+      if (usually()) {
+        iw.commit();
+      }
+    }
+    DirectoryReader reader = iw.getReader();
+    SuggestIndexSearcher indexSearcher = new SuggestIndexSearcher(reader, analyzer);
+    TopSuggestDocs suggest = indexSearcher.suggest("suggest_field", "abc_", (entries.size() == 0) ? 1 : entries.size());
+    assertSuggestions(suggest, entries.toArray(new Entry[entries.size()]));
+
     reader.close();
     iw.close();
   }
@@ -396,6 +465,10 @@ public class SuggestFieldTest extends LuceneTestCase {
       document.add(new IntField("int_field", i, Field.Store.YES));
       iw.addDocument(document);
       document.clear();
+
+      if (random().nextBoolean()) {
+        iw.commit();
+      }
     }
 
     DirectoryReader reader = iw.getReader();

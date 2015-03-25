@@ -24,12 +24,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Terms;
-import org.apache.lucene.search.CollectionTerminatedException;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.util.automaton.Automaton;
 
 import static org.apache.lucene.search.suggest.document.CompletionFieldsProducer.CompletionTerms;
@@ -74,7 +71,7 @@ public class SuggestIndexSearcher extends IndexSearcher {
    * Suggests at most <code>num</code> documents filtered by <code>filter</code>
    * that completes to <code>key</code> for a suggest <code>field</code>
    * <p>
-   * Returns at most Top <code>num</code> document ids with corresponding completions and weights
+   * Returns at most Top <code>num</code> document ids with corresponding completion and weight pair
    *
    * @throws java.lang.IllegalArgumentException if <code>filter</code> does not provide a random access
    *                                            interface or if <code>field</code> is not a {@link SuggestField}
@@ -89,9 +86,9 @@ public class SuggestIndexSearcher extends IndexSearcher {
    * Suggests at most <code>num</code> documents filtered by <code>filter</code>
    * that completes to <code>key</code> for a suggest <code>field</code>
    * <p>
-   * Collects the hits with {@link org.apache.lucene.search.suggest.document.TopSuggestDocsCollector}
-   * The hits are collected in order of the suggest <code>field</code> weight.
-   * There can be more than one collection of the same hit, if the <code>key</code>
+   * Collect completions with {@link org.apache.lucene.search.suggest.document.TopSuggestDocsCollector}
+   * The completions are collected in order of the suggest <code>field</code> weight.
+   * There can be more than one collection of the same document, if the <code>key</code>
    * matches multiple <code>field</code> values of the same document
    *
    * @throws java.lang.IllegalArgumentException if <code>filter</code> does not provide a random access

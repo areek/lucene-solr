@@ -18,28 +18,23 @@ package org.apache.lucene.search.suggest.document;
  */
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.CollectionTerminatedException;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.LeafCollector;
-import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.suggest.document.TopSuggestDocs.SuggestScoreDocPriorityQueue;
 
-import static org.apache.lucene.search.suggest.document.TopSuggestDocs.EMPTY;
 import static org.apache.lucene.search.suggest.document.TopSuggestDocs.SuggestScoreDoc;
 
 /**
  * {@link org.apache.lucene.search.Collector} for
  * {@link NRTSuggester}
  * <p>
- * Non scoring collector that collect hits in order of their
+ * Non scoring collector that collect completions in order of their
  * pre-defined weight.
  * <p>
- * NOTE: One hit can be collected multiple times if a document
- * is matched for multiple completions for a given query
+ * NOTE: One document can be collected multiple times if a document
+ * is matched for multiple unique completions for a given query
  * <p>
  * Subclasses should only override {@link #collect(int, CharSequence, long)},
  * {@link #setScorer(org.apache.lucene.search.Scorer)} is not
@@ -50,10 +45,13 @@ import static org.apache.lucene.search.suggest.document.TopSuggestDocs.SuggestSc
 public class TopSuggestDocsCollector extends SimpleCollector {
 
   private final SuggestScoreDocPriorityQueue priorityQueue;
+  protected int docBase;
 
   /**
-   * Creates a leaf collector to hold
-   * at most <code>num</code> hits
+   * Sole constructor
+   *
+   * Collects at most <code>num</code> completions
+   * with corresponding document and weight
    */
   public TopSuggestDocsCollector(int num) {
     if (num <= 0) {
@@ -62,19 +60,32 @@ public class TopSuggestDocsCollector extends SimpleCollector {
     this.priorityQueue = new SuggestScoreDocPriorityQueue(num);
   }
 
+  @Override
+  protected void doSetNextReader(LeafReaderContext context) throws IOException {
+    docBase = context.docBase;
+  }
+
   /**
-   * Called for every hit, similar to {@link org.apache.lucene.search.LeafCollector#collect(int)}
+   * Called for every matched completion,
+   * similar to {@link org.apache.lucene.search.LeafCollector#collect(int)}
+   * but for completions.
+   *
+   * NOTE: collection at the leaf level is guaranteed to be in
+   * descending order of score
    */
   public void collect(int docID, CharSequence key, long score) throws IOException {
-    SuggestScoreDoc current = new SuggestScoreDoc(docID, key, score);
-    SuggestScoreDoc overflow = priorityQueue.insertWithOverflow(current);
-    if (overflow == current) {
+    SuggestScoreDoc current = new SuggestScoreDoc(docBase + docID, key, score);
+    if (current == priorityQueue.insertWithOverflow(current)) {
+      // if the current SuggestScoreDoc has overflown from pq,
+      // we can assume all of the successive collections from
+      // this leaf will be overflown as well
+      // TODO: reuse the overflow instance?
       throw new CollectionTerminatedException();
     }
   }
 
   /**
-   * Returns the hits
+   * Returns at most <code>num</code> Top scoring {@link TopSuggestDocs}s
    */
   public TopSuggestDocs get() throws IOException {
     SuggestScoreDoc[] suggestScoreDocs = priorityQueue.getResults();
