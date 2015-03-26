@@ -21,11 +21,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IntsRef;
 import org.apache.lucene.util.IntsRefBuilder;
 import org.apache.lucene.util.automaton.Automaton;
 import org.apache.lucene.util.automaton.Transition;
+import org.apache.lucene.util.fst.Builder;
+import org.apache.lucene.util.fst.ByteSequenceOutputs;
 import org.apache.lucene.util.fst.FST;
+import org.apache.lucene.util.fst.PairOutputs;
+import org.apache.lucene.util.fst.PositiveIntOutputs;
 import org.apache.lucene.util.fst.Util;
 
 // TODO: move to core?  nobody else uses it yet though...
@@ -49,7 +54,7 @@ public class FSTUtil {
     public final FST.Arc<T> fstNode;
 
     /** Output of the path so far: */
-    public final T output;
+    public T output;
 
     /** Input of the path so far: */
     public final IntsRefBuilder input;
@@ -61,6 +66,92 @@ public class FSTUtil {
       this.output = output;
       this.input = input;
     }
+  }
+
+  public static void main(String[] args) throws Exception {
+    Builder<Long> builder = new Builder<>(FST.INPUT_TYPE.BYTE1, PositiveIntOutputs.getSingleton());
+    IntsRefBuilder scratch = new IntsRefBuilder();
+
+    builder.add(Util.toIntsRef(new BytesRef("abc"), scratch), 1l);
+    builder.add(Util.toIntsRef(new BytesRef("abd"), scratch), 2l);
+    builder.add(Util.toIntsRef(new BytesRef("abf"), scratch), 3l);
+    FST<Long> fst = builder.finish();
+
+    FST.Arc<Long> arc = fst.getFirstArc(new FST.Arc<>());
+
+    final FST.Arc<Long> scratchArc = new FST.Arc<>();
+    FST.BytesReader reader = fst.getBytesReader();
+
+    fst.findTargetArc(0, arc, scratchArc, reader);
+
+    int x = 0;
+  }
+
+  private static class Paths {
+    private final Path<Long> contextPath;
+    private final Path<PairOutputs.Pair<Long, BytesRef>> fstPath;
+
+    private Paths(Path<Long> contextPath, Path<PairOutputs.Pair<Long, BytesRef>> fstPath) {
+      this.contextPath = contextPath;
+      this.fstPath = fstPath;
+    }
+  }
+
+  public static List<Path<PairOutputs.Pair<Long, BytesRef>>> intersect(FST<Long> context, FST<PairOutputs.Pair<Long, BytesRef>> fst) throws IOException {
+    final List<Paths> queue = new ArrayList<>();
+    final List<Path<PairOutputs.Pair<Long, BytesRef>>> endNodes = new ArrayList<>();
+
+    Path<PairOutputs.Pair<Long, BytesRef>> fstPath = new Path<>(0, fst
+        .getFirstArc(new FST.Arc<>()), fst.outputs.getNoOutput(),
+        new IntsRefBuilder());
+
+    Path<Long> contextPath = new Path<>(0, context.getFirstArc(new FST.Arc<>()),
+        context.outputs.getNoOutput(), new IntsRefBuilder());
+
+    queue.add(new Paths(contextPath, fstPath));
+
+    final FST.Arc<Long> conextScratchArc = new FST.Arc<>();
+    final FST.Arc<PairOutputs.Pair<Long, BytesRef>> scratchArc = new FST.Arc<>();
+    final BytesRef emptyBytesRef = new BytesRef();
+    final PairOutputs<Long, BytesRef> scratchOutputs = new PairOutputs<>(PositiveIntOutputs.getSingleton(), ByteSequenceOutputs.getSingleton());
+
+    final FST.BytesReader fstReader = fst.getBytesReader();
+    final FST.BytesReader contextReader = context.getBytesReader();
+
+    while (queue.size() != 0) {
+      final Paths paths = queue.remove(queue.size() - 1);
+      if (paths.contextPath.fstNode.isFinal() && paths.fstPath.fstNode.isFinal()) {
+        PairOutputs.Pair<Long, BytesRef> output = fst.outputs.add(paths.fstPath.output, paths.fstPath.fstNode.nextFinalOutput);
+        PairOutputs.Pair<Long, BytesRef> contextOutput = scratchOutputs.newPair(paths.contextPath.output, emptyBytesRef);
+        contextOutput = fst.outputs.add(contextOutput, scratchOutputs.newPair(paths.contextPath.fstNode.nextFinalOutput, emptyBytesRef));
+        output = fst.outputs.add(output, contextOutput);
+        endNodes.add(new Path<>(0, paths.fstPath.fstNode, output, paths.fstPath.input));
+        continue;
+      }
+      IntsRefBuilder currentInput = paths.fstPath.input;
+
+      context.readFirstRealTargetArc(paths.contextPath.fstNode.target, paths.contextPath.fstNode, contextReader);
+      fst.readFirstRealTargetArc(paths.fstPath.fstNode.target, paths.fstPath.fstNode, fstReader);
+
+      while (true) {
+
+        if (paths.contextPath.fstNode.isFinal() || paths.fstPath.fstNode.isFinal()) {
+          break;
+        }
+        paths.fstPath.fstNode.numArcs
+
+        context.readNextArc(paths.contextPath.fstNode, contextReader);
+        fst.readNextArc(paths.fstPath.fstNode, fstReader);
+      }
+
+      paths.contextPath.input.append(paths.contextPath.fstNode.label);
+      paths.contextPath.output = context.outputs.add(paths.contextPath.output, paths.contextPath.fstNode.output);
+
+      paths.fstPath.input.append(paths.fstPath.fstNode.label);
+      paths.fstPath.output = fst.outputs.add(paths.fstPath.output, paths.fstPath.fstNode.output);
+
+    }
+    return endNodes;
   }
 
   /**
