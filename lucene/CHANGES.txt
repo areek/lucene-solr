@@ -33,7 +33,13 @@ API Changes
   implementation returning the empty list.  (Robert Muir)
 
 ======================= Lucene 5.3.0 =======================
-(No Changes)
+New Features
+
+* LUCENE-6459: Add common suggest API that mirrors Lucene's
+  Query/IndexSearcher APIs for Document based suggester.
+  Adds PrefixCompletionQuery, RegexCompletionQuery,
+  FuzzyCompletionQuery and ContextQuery.
+  (Areek Zillur, Mike McCandless)
 
 ======================= Lucene 5.2.0 =======================
 
