@@ -93,7 +93,7 @@ public class FSTUtil {
         // we accept all further paths too
         continue;
       }
-      
+
       IntsRefBuilder currentInput = path.input;
       int count = a.initTransition(path.state, t);
       for (int i=0;i<count;i++) {
