@@ -77,19 +77,26 @@ public class ContextSuggestField extends SuggestField {
     }
   }
 
+  /**
+   * Sub-classes can inject contexts at
+   * index-time by overriding
+   */
+  protected Set<CharSequence> contexts() {
+    return contexts;
+  }
+
   @Override
   protected CompletionTokenStream wrapTokenStream(TokenStream stream) {
     CompletionTokenStream completionTokenStream;
+    PrefixTokenFilter prefixTokenFilter = new PrefixTokenFilter(stream, (char) CONTEXT_SEPARATOR, contexts());
     if (stream instanceof CompletionTokenStream) {
       completionTokenStream = (CompletionTokenStream) stream;
-      completionTokenStream = new CompletionTokenStream(
-          new PrefixTokenFilter(stream, (char) CONTEXT_SEPARATOR, contexts),
+      completionTokenStream = new CompletionTokenStream(prefixTokenFilter,
           completionTokenStream.preserveSep,
           completionTokenStream.preservePositionIncrements,
           completionTokenStream.maxGraphExpansions);
     } else {
-      completionTokenStream = new CompletionTokenStream(
-          new PrefixTokenFilter(stream, (char) CONTEXT_SEPARATOR, contexts));
+      completionTokenStream = new CompletionTokenStream(prefixTokenFilter);
     }
     return completionTokenStream;
   }
@@ -154,7 +161,7 @@ public class ContextSuggestField extends SuggestField {
     }
   }
 
-  private void validate(final CharSequence value) {
+  protected void validate(final CharSequence value) {
     for (int i = 0; i < value.length(); i++) {
       if (CONTEXT_SEPARATOR == value.charAt(i)) {
         throw new IllegalArgumentException("Illegal value [" + value + "] UTF-16 codepoint [0x"

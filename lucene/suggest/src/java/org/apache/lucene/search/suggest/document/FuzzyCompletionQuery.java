@@ -223,7 +223,7 @@ public class FuzzyCompletionQuery extends PrefixCompletionQuery {
     }
 
     @Override
-    protected void setNextMatch(IntsRef pathPrefix) {
+    protected void setNextMatch(final IntsRef pathPrefix) {
       // NOTE: the last letter of the matched prefix for the exact
       // match never makes it through here
       // so an exact match and a match with only a edit at the

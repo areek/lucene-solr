@@ -18,6 +18,7 @@ package org.apache.lucene.search.suggest.document;
  */
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReader;
@@ -39,7 +40,7 @@ import org.apache.lucene.util.automaton.Automaton;
  * score and explain these queries.
  *
  * Subclasses can override {@link #setNextMatch(IntsRef)},
- * {@link #boost()} and {@link #context()}
+ * {@link #boost()} and {@link #contexts()}
  * to calculate the boost and extract the context of
  * a matched path prefix.
  *
@@ -107,12 +108,12 @@ public class CompletionWeight extends Weight {
    * Set for every partial path in the index that matched the query
    * automaton.
    *
-   * Subclasses should override {@link #boost()} and {@link #context()}
+   * Subclasses should override {@link #boost()} and {@link #contexts()}
    * to return an appropriate value with respect to the current pathPrefix.
    *
    * @param pathPrefix the prefix of a matched path
    */
-  protected void setNextMatch(IntsRef pathPrefix) {
+  protected void setNextMatch(final IntsRef pathPrefix) {
   }
 
   /**
@@ -129,7 +130,7 @@ public class CompletionWeight extends Weight {
    *
    * @return suggestion context
    */
-  protected CharSequence context() {
+  protected List<CharSequence> contexts() {
     return null;
   }
 

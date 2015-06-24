@@ -104,11 +104,11 @@ public class TestFuzzyCompletionQuery extends LuceneTestCase {
     CompletionQuery query =  new ContextQuery(new FuzzyCompletionQuery(analyzer, new Term("suggest_field", "sugge")));
     TopSuggestDocs suggest = suggestIndexSearcher.suggest(query, 5);
     assertSuggestions(suggest,
-        new Entry("suggestion", "type4", 1 + 4),
-        new Entry("suggdestion", "type4", 1 + 4),
-        new Entry("sugdgestion", "type3", 1 + 3),
-        new Entry("sudggestion", "type2", 1 + 2),
-        new Entry("sduggestion", "type1", 1 + 1)
+        new Entry("suggestion", 4, "type4"),
+        new Entry("suggdestion", 4, "type4"),
+        new Entry("sugdgestion", 3, "type3"),
+        new Entry("sudggestion", 2, "type2"),
+        new Entry("sduggestion", 1, "type1")
     );
 
     reader.close();
@@ -143,8 +143,8 @@ public class TestFuzzyCompletionQuery extends LuceneTestCase {
     contextQuery.addContext("type3", 2);
     TopSuggestDocs suggest = suggestIndexSearcher.suggest(contextQuery, 5);
     assertSuggestions(suggest,
-        new Entry("sduggestion", "type1", 1 * (1 + 6)),
-        new Entry("sugdgestion", "type3", 1 * (3 + 2))
+        new Entry("sduggestion", 1 * (1 + 6), "type1"),
+        new Entry("sugdgestion", 1 * (3 + 2), "type3")
     );
 
     reader.close();

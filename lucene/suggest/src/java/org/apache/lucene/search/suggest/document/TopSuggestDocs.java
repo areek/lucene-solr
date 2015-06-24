@@ -48,7 +48,7 @@ public class TopSuggestDocs extends TopDocs {
     /**
      * Context for the completion
      */
-    public final CharSequence context;
+    public final CharSequence[] contexts;
 
     /**
      * Creates a SuggestScoreDoc instance
@@ -57,10 +57,10 @@ public class TopSuggestDocs extends TopDocs {
      * @param key   matched completion
      * @param score weight of the matched completion
      */
-    public SuggestScoreDoc(int doc, CharSequence key, CharSequence context, float score) {
+    public SuggestScoreDoc(int doc, CharSequence key, CharSequence[] contexts, float score) {
       super(doc, score);
       this.key = key;
-      this.context = context;
+      this.contexts = contexts;
     }
 
     @Override

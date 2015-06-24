@@ -19,6 +19,7 @@ package org.apache.lucene.search.suggest.document;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -586,16 +587,12 @@ public class TestSuggestField extends LuceneTestCase {
   static class Entry {
     final String output;
     final float value;
-    final String context;
+    final List<String> contexts;
 
-    Entry(String output, float value) {
-      this(output, null, value);
-    }
-
-    Entry(String output, String context, float value) {
+    Entry(String output, float value, String... contexts) {
       this.output = output;
       this.value = value;
-      this.context = context;
+      this.contexts = (contexts == null) ? Collections.singletonList(null) : Arrays.asList(contexts);
     }
   }
 
@@ -607,16 +604,22 @@ public class TestSuggestField extends LuceneTestCase {
       String msg = "Expected: " + toString(expected[i]) + " Actual: " + toString(lookupDoc);
       assertThat(msg, lookupDoc.key.toString(), equalTo(expected[i].output));
       assertThat(msg, lookupDoc.score, equalTo(expected[i].value));
-      assertThat(msg, lookupDoc.context, equalTo(expected[i].context));
+      int nContext = 0;
+      if (lookupDoc.contexts != null) {
+        for (CharSequence context : lookupDoc.contexts) {
+          assertTrue(expected[i].contexts.size() > nContext);
+          assertThat(msg, context, equalTo(expected[i].contexts.get(nContext++)));
+        }
+      }
     }
   }
 
   private static String toString(Entry expected) {
-    return "key:"+ expected.output+" score:"+expected.value+" context:"+expected.context;
+    return "key:"+ expected.output+" score:"+expected.value+" context:"+expected.contexts;
   }
 
   private static String toString(SuggestScoreDoc actual) {
-    return "key:"+ actual.key.toString()+" score:"+actual.score+" context:"+actual.context;
+    return "key:"+ actual.key.toString()+" score:"+actual.score+" context:"+ actual.contexts;
   }
 
   static IndexWriterConfig iwcWithSuggestField(Analyzer analyzer, String... suggestFields) {

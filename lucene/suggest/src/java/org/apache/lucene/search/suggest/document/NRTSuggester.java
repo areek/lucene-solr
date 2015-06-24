@@ -123,7 +123,7 @@ public final class NRTSuggester implements Accountable {
    * the matched partial paths. Upon reaching a completed path, {@link CompletionScorer#accept(int)}
    * and {@link CompletionScorer#score(float, float)} is used on the document id, index weight
    * and query boost to filter and score the entry, before being collected via
-   * {@link TopSuggestDocsCollector#collect(int, CharSequence, CharSequence, float)}
+   * {@link TopSuggestDocsCollector#collect(int, CharSequence, CharSequence[], float)}
    */
   public void lookup(final CompletionScorer scorer, final TopSuggestDocsCollector collector) throws IOException {
     final double liveDocsRatio = calculateLiveDocRatio(scorer.reader.numDocs(), scorer.reader.maxDoc());
@@ -132,10 +132,10 @@ public final class NRTSuggester implements Accountable {
     }
     final List<FSTUtil.Path<Pair<Long, BytesRef>>> prefixPaths = FSTUtil.intersectPrefixPaths(scorer.automaton, fst);
     final int queueSize = getMaxTopNSearcherQueueSize(collector.getCountToCollect() * prefixPaths.size(),
-        scorer.reader.numDocs(), liveDocsRatio, scorer.filtered);
+            scorer.reader.numDocs(), liveDocsRatio, scorer.filtered);
     Comparator<Pair<Long, BytesRef>> comparator = getComparator();
     Util.TopNSearcher<Pair<Long, BytesRef>> searcher = new Util.TopNSearcher<Pair<Long, BytesRef>>(fst,
-        collector.getCountToCollect(), queueSize, comparator, new ScoringPathComparator(scorer)) {
+            collector.getCountToCollect(), queueSize, comparator, new ScoringPathComparator(scorer)) {
 
       private final CharsRefBuilder spare = new CharsRefBuilder();
 
@@ -148,7 +148,7 @@ public final class NRTSuggester implements Accountable {
         }
         try {
           float score = scorer.score(decode(path.cost.output1), path.boost);
-          collector.collect(docID, spare.toCharsRef(), path.context, score);
+          collector.collect(docID, spare.toCharsRef(), path.contexts, score);
           return true;
         } catch (IOException e) {
           throw new RuntimeException(e);
@@ -158,8 +158,14 @@ public final class NRTSuggester implements Accountable {
 
     for (FSTUtil.Path<Pair<Long, BytesRef>> path : prefixPaths) {
       scorer.weight.setNextMatch(path.input.get());
-      searcher.addStartPaths(path.fstNode, path.output, false, path.input, scorer.weight.boost(),
-          scorer.weight.context());
+      List<CharSequence> contexts = scorer.weight.contexts();
+      final CharSequence[] contextArray;
+      if (contexts != null) {
+        contextArray = contexts.toArray(new CharSequence[contexts.size()]);
+      } else {
+        contextArray = null;
+      }
+      searcher.addStartPaths(path.fstNode, path.output, false, path.input, scorer.weight.boost(), contextArray);
     }
     // hits are also returned by search()
     // we do not use it, instead collect at acceptResult
@@ -230,7 +236,7 @@ public final class NRTSuggester implements Accountable {
    */
   public static NRTSuggester load(IndexInput input) throws IOException {
     final FST<Pair<Long, BytesRef>> fst = new FST<>(input, new PairOutputs<>(
-        PositiveIntOutputs.getSingleton(), ByteSequenceOutputs.getSingleton()));
+            PositiveIntOutputs.getSingleton(), ByteSequenceOutputs.getSingleton()));
 
     /* read some meta info */
     int maxAnalyzedPathsPerOutput = input.readVInt();
@@ -253,7 +259,7 @@ public final class NRTSuggester implements Accountable {
 
   static long decode(long output) {
     assert output >= 0 && output <= Integer.MAX_VALUE :
-        "decoded output: " + output + " is not within 0 and Integer.MAX_VALUE";
+            "decoded output: " + output + " is not within 0 and Integer.MAX_VALUE";
     return Integer.MAX_VALUE - output;
   }
 
@@ -279,7 +285,7 @@ public final class NRTSuggester implements Accountable {
     static int parseDocID(final BytesRef output, int payloadSepIndex) {
       assert payloadSepIndex != -1 : "payload sep index can not be -1";
       ByteArrayDataInput input = new ByteArrayDataInput(output.bytes, payloadSepIndex + output.offset + 1,
-          output.length - (payloadSepIndex + output.offset));
+              output.length - (payloadSepIndex + output.offset));
       return input.readVInt();
     }
 

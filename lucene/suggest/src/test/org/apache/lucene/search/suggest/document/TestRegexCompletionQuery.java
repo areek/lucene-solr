@@ -101,11 +101,11 @@ public class TestRegexCompletionQuery extends LuceneTestCase {
     CompletionQuery query = new RegexCompletionQuery(new Term("suggest_field", "[a|s][d|u|s][u|d|g]"));
     TopSuggestDocs suggest = suggestIndexSearcher.suggest(query, 5);
     assertSuggestions(suggest,
-        new Entry("sduggestion", "type1", 5),
-        new Entry("sudggestion", "type2", 4),
-        new Entry("sugdgestion", "type3", 3),
-        new Entry("suggdestion", "type4", 2),
-        new Entry("suggestion", "type4", 1));
+        new Entry("sduggestion", 5, "type1"),
+        new Entry("sudggestion", 4, "type2"),
+        new Entry("sugdgestion", 3, "type3"),
+        new Entry("suggdestion", 2, "type4"),
+        new Entry("suggestion", 1, "type4"));
 
     reader.close();
     iw.close();
@@ -137,13 +137,13 @@ public class TestRegexCompletionQuery extends LuceneTestCase {
     ContextQuery contextQuery = new ContextQuery(query);
     contextQuery.addContext("type1", 6);
     contextQuery.addContext("type3", 7);
-    contextQuery.addContext("*");
+    contextQuery.addAllContexts();
     TopSuggestDocs suggest = suggestIndexSearcher.suggest(contextQuery, 5);
     assertSuggestions(suggest,
-        new Entry("sduggestion", "type1", 5 * 6),
-        new Entry("sugdgestion", "type3", 3 * 7),
-        new Entry("suggdestion", "type4", 2),
-        new Entry("suggestion", "type4", 1));
+        new Entry("sduggestion", 5 * 6, "type1"),
+        new Entry("sugdgestion", 3 * 7, "type3"),
+        new Entry("suggdestion", 2, "type4"),
+        new Entry("suggestion", 1, "type4"));
 
     reader.close();
     iw.close();

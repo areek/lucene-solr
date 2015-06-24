@@ -133,10 +133,10 @@ public class TestContextSuggestField extends LuceneTestCase {
     query = new PrefixCompletionQuery(analyzer, new Term("context_suggest_field", "sugg"));
     suggest = suggestIndexSearcher.suggest(query, 10);
     assertSuggestions(suggest,
-        new Entry("suggestion1", "type1", 4),
-        new Entry("suggestion2", "type2", 3),
-        new Entry("suggestion3", "type3", 2),
-        new Entry("suggestion4", "type4", 1));
+        new Entry("suggestion1", 4, "type1"),
+        new Entry("suggestion2", 3, "type2"),
+        new Entry("suggestion3", 2, "type3"),
+        new Entry("suggestion4", 1, "type4"));
 
     reader.close();
     iw.close();

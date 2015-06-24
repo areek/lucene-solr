@@ -61,7 +61,7 @@ public class SuggestIndexSearcher extends IndexSearcher {
    * Lower-level suggest API.
    * Collects completion hits through <code>collector</code> for <code>query</code>.
    *
-   * <p>{@link TopSuggestDocsCollector#collect(int, CharSequence, CharSequence, float)}
+   * <p>{@link TopSuggestDocsCollector#collect(int, CharSequence, CharSequence[], float)}
    * is called for every matching completion hit.
    */
   public void suggest(CompletionQuery query, TopSuggestDocsCollector collector) throws IOException {
