@@ -125,12 +125,14 @@ public class TestPrefixCompletionQuery extends LuceneTestCase {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
     Document document = new Document();
-
     document.add(new SuggestField("suggest_field", "abc", 3));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field", "abd", 4));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field", "The Foo Fighters", 2));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new SuggestField("suggest_field", "abcdd", 5));
     iw.addDocument(document);
@@ -175,7 +177,7 @@ public class TestPrefixCompletionQuery extends LuceneTestCase {
     // the search should be admissible for a single segment
     TopSuggestDocs suggest = indexSearcher.suggest(query, num);
     assertTrue(suggest.totalHits >= 1);
-    assertThat(suggest.scoreLookupDocs()[0].key.toString(), equalTo("abc_" + topScore));
+    assertThat(suggest.scoreLookupDocs()[0].keys.get(0).toString(), equalTo("abc_" + topScore));
     assertThat(suggest.scoreLookupDocs()[0].score, equalTo((float) topScore));
 
     filter = new NumericRangeBitsProducer("filter_int_fld", 0, 0);
@@ -243,10 +245,17 @@ public class TestPrefixCompletionQuery extends LuceneTestCase {
     Analyzer analyzer = new MockAnalyzer(random(), MockTokenizer.WHITESPACE, true, MockTokenFilter.ENGLISH_STOPSET);
     CompletionAnalyzer completionAnalyzer = new CompletionAnalyzer(analyzer, false, false);
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(completionAnalyzer, "suggest_field_no_p_sep_or_pos_inc"));
+
     Document document = new Document();
     document.add(new SuggestField("suggest_field_no_p_sep_or_pos_inc", "foobar", 7));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_sep_or_pos_inc", "foo bar", 8));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_sep_or_pos_inc", "the fo", 9));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_sep_or_pos_inc", "the foo bar", 10));
     iw.addDocument(document);
 
@@ -267,10 +276,17 @@ public class TestPrefixCompletionQuery extends LuceneTestCase {
     Analyzer analyzer = new MockAnalyzer(random(), MockTokenizer.WHITESPACE, true, MockTokenFilter.ENGLISH_STOPSET);
     CompletionAnalyzer completionAnalyzer = new CompletionAnalyzer(analyzer, true, false);
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(completionAnalyzer, "suggest_field_no_p_pos_inc"));
+
     Document document = new Document();
     document.add(new SuggestField("suggest_field_no_p_pos_inc", "foobar", 7));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_pos_inc", "foo bar", 8));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_pos_inc", "the fo", 9));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_pos_inc", "the foo bar", 10));
     iw.addDocument(document);
 
@@ -291,10 +307,17 @@ public class TestPrefixCompletionQuery extends LuceneTestCase {
     Analyzer analyzer = new MockAnalyzer(random(), MockTokenizer.WHITESPACE, true, MockTokenFilter.ENGLISH_STOPSET);
     CompletionAnalyzer completionAnalyzer = new CompletionAnalyzer(analyzer, false, true);
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(completionAnalyzer, "suggest_field_no_p_sep"));
+
     Document document = new Document();
     document.add(new SuggestField("suggest_field_no_p_sep", "foobar", 7));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_sep", "foo bar", 8));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_sep", "the fo", 9));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field_no_p_sep", "the foo bar", 10));
     iw.addDocument(document);
 

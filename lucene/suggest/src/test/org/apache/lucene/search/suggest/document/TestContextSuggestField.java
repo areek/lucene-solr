@@ -108,18 +108,29 @@ public class TestContextSuggestField extends LuceneTestCase {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir,
         iwcWithSuggestField(analyzer, "suggest_field", "context_suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new SuggestField("suggest_field", "suggestion1", 4));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field", "suggestion2", 3));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field", "suggestion3", 2));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("context_suggest_field", "suggestion1", 4, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("context_suggest_field", "suggestion2", 3, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("context_suggest_field", "suggestion3", 2, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new SuggestField("suggest_field", "suggestion4", 1));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("context_suggest_field", "suggestion4", 1, "type4"));
     iw.addDocument(document);
 

@@ -23,7 +23,6 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.BulkScorer;
 import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.util.Bits;
-import org.apache.lucene.util.automaton.Automaton;
 
 /**
  * Expert: Responsible for executing the query against an
@@ -47,28 +46,26 @@ public class CompletionScorer extends BulkScorer {
   protected final CompletionWeight weight;
   final LeafReader reader;
   final boolean filtered;
-  final Automaton automaton;
 
   /**
    * Creates a scorer for a field-specific <code>suggester</code> scoped by <code>acceptDocs</code>
    */
   protected CompletionScorer(final CompletionWeight weight, final NRTSuggester suggester,
                              final LeafReader reader, final Bits filterDocs,
-                             final boolean filtered, final Automaton automaton) throws IOException {
+                             final boolean filtered) throws IOException {
     this.weight = weight;
     this.suggester = suggester;
     this.reader = reader;
-    this.automaton = automaton;
     this.filtered = filtered;
     this.filterDocs = filterDocs;
   }
 
   @Override
   public int score(LeafCollector collector, Bits acceptDocs, int min, int max) throws IOException {
-    if (!(collector instanceof TopSuggestDocsCollector)) {
+    if (!(collector instanceof TopSuggestionsCollector)) {
       throw new IllegalArgumentException("collector is not of type TopSuggestDocsCollector");
     }
-    suggester.lookup(this, acceptDocs, ((TopSuggestDocsCollector) collector));
+    suggester.lookup(this, acceptDocs, ((TopSuggestionsCollector) collector));
     return max;
   }
 

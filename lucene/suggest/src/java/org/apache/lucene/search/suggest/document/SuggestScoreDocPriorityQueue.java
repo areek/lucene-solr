@@ -26,22 +26,48 @@ import org.apache.lucene.util.PriorityQueue;
  * is broken by {@link SuggestScoreDoc#doc}
  */
 final class SuggestScoreDocPriorityQueue extends PriorityQueue<SuggestScoreDoc> {
+
+  //private final Object[] heap;
   /**
    * Creates a new priority queue of the specified size.
    */
   public SuggestScoreDocPriorityQueue(int size) {
     super(size);
+    //this.heap = getHeapArray();
   }
 
   @Override
   protected boolean lessThan(SuggestScoreDoc a, SuggestScoreDoc b) {
-    if (a.score == b.score) {
-      // prefer smaller doc id, in case of a tie
-      return a.doc > b.doc;
+    return a.compareTo(b) > 0;
+  }
+  /*
+  public void update(SuggestScoreDoc scoreDoc) {
+    for (int i = 1; i <= size(); i++) {
+      if (heap[i] == scoreDoc) {
+        downHeap(i);
+      }
     }
-    return a.score < b.score;
   }
 
+  private final void downHeap(int i) {
+    Object node = heap[i];          // save top node
+    int j = i << 1;            // find smaller child
+    int k = j + 1;
+    if (k <= size() && lessThan(heap[k], heap[j])) {
+      j = k;
+    }
+    while (j <= size() && lessThan(heap[j], node)) {
+      heap[i] = heap[j];       // shift up child
+      i = j;
+      j = i << 1;
+      k = j + 1;
+      if (k <= size() && lessThan(heap[k], heap[j])) {
+        j = k;
+      }
+    }
+    heap[i] = node;            // install saved node
+  }
+  */
   /**
    * Returns the top N results in descending order.
    */

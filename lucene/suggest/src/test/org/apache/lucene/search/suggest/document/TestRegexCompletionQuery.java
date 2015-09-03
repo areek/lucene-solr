@@ -50,13 +50,16 @@ public class TestRegexCompletionQuery extends LuceneTestCase {
   public void testRegexQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new SuggestField("suggest_field", "suggestion", 1));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field", "asuggestion", 2));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field", "ssuggestion", 3));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new SuggestField("suggest_field", "wsuggestion", 4));
     iw.addDocument(document);
@@ -80,15 +83,20 @@ public class TestRegexCompletionQuery extends LuceneTestCase {
   public void testSimpleRegexContextQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sduggestion", 5, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sudggestion", 4, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sugdgestion", 3, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggdestion", 2, "type4"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion", 1, "type4"));
     iw.addDocument(document);
 
@@ -115,15 +123,20 @@ public class TestRegexCompletionQuery extends LuceneTestCase {
   public void testRegexContextQueryWithBoost() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sduggestion", 5, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sudggestion", 4, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sugdgestion", 3, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggdestion", 2, "type4"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion", 1, "type4"));
     iw.addDocument(document);
 

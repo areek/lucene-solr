@@ -50,10 +50,14 @@ public class TestFuzzyCompletionQuery extends LuceneTestCase {
   public void testFuzzyQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new SuggestField("suggest_field", "suggestion", 2));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field", "suaggestion", 4));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new SuggestField("suggest_field", "ssuggestion", 1));
     iw.addDocument(document);
     document = new Document();
@@ -83,15 +87,20 @@ public class TestFuzzyCompletionQuery extends LuceneTestCase {
   public void testFuzzyContextQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
+
     Document document = new Document();
-
-    document.add(new ContextSuggestField("suggest_field", "sduggestion", 1, "type1"));
-    document.add(new ContextSuggestField("suggest_field", "sudggestion", 1, "type2"));
-    document.add(new ContextSuggestField("suggest_field", "sugdgestion", 1, "type3"));
+    document.add(new ContextSuggestField("suggest_field", "sxuggestion", 1, "type1"));
     iw.addDocument(document);
-
     document = new Document();
-    document.add(new ContextSuggestField("suggest_field", "suggdestion", 1, "type4"));
+    document.add(new ContextSuggestField("suggest_field", "suxggestion", 1, "type2"));
+    iw.addDocument(document);
+    document = new Document();
+    document.add(new ContextSuggestField("suggest_field", "sugxgestion", 1, "type3"));
+    iw.addDocument(document);
+    document = new Document();
+    document.add(new ContextSuggestField("suggest_field", "suggxestion", 1, "type4"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion", 1, "type4"));
     iw.addDocument(document);
 
@@ -105,10 +114,10 @@ public class TestFuzzyCompletionQuery extends LuceneTestCase {
     TopSuggestDocs suggest = suggestIndexSearcher.suggest(query, 5);
     assertSuggestions(suggest,
         new Entry("suggestion", "type4", 4),
-        new Entry("suggdestion", "type4", 4),
-        new Entry("sugdgestion", "type3", 3),
-        new Entry("sudggestion", "type2", 2),
-        new Entry("sduggestion", "type1", 1)
+        new Entry("suggxestion", "type4", 4),
+        new Entry("sugxgestion", "type3", 3),
+        new Entry("suxggestion", "type2", 2),
+        new Entry("sxuggestion", "type1", 1)
     );
 
     reader.close();
@@ -119,15 +128,20 @@ public class TestFuzzyCompletionQuery extends LuceneTestCase {
   public void testFuzzyFilteredContextQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sduggestion", 1, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sudggestion", 1, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "sugdgestion", 1, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggdestion", 1, "type4"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion", 1, "type4"));
     iw.addDocument(document);
 

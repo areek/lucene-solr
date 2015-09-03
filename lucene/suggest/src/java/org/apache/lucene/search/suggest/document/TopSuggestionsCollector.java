@@ -18,11 +18,10 @@ package org.apache.lucene.search.suggest.document;
  */
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.CollectionTerminatedException;
+import org.apache.lucene.search.SimpleCollector;
 
 import static org.apache.lucene.search.suggest.document.TopSuggestDocs.SuggestScoreDoc;
 
@@ -37,16 +36,22 @@ import static org.apache.lucene.search.suggest.document.TopSuggestDocs.SuggestSc
  * is matched for multiple unique completions for a given query
  * <p>
  * Subclasses should only override
- * {@link TopSuggestDocsCollector#collect(int, CharSequence, CharSequence, float)}.
+ * {@link TopSuggestionsCollector#collect(int, CharSequence, CharSequence, float)}.
  * <p>
  * NOTE: {@link #setScorer(org.apache.lucene.search.Scorer)} and
  * {@link #collect(int)} is not used
  *
  * @lucene.experimental
  */
-public class TopSuggestDocsCollector extends TopSuggestionsCollector {
+public class TopSuggestionsCollector extends SimpleCollector {
 
-  private Map<Integer, SuggestScoreDoc> seenDocIds;
+  protected final SuggestScoreDocPriorityQueue priorityQueue;
+  protected final int num;
+
+  /**
+   * Document base offset for the current Leaf
+   */
+  protected int docBase;
 
   /**
    * Sole constructor
@@ -54,57 +59,71 @@ public class TopSuggestDocsCollector extends TopSuggestionsCollector {
    * Collects at most <code>num</code> completions
    * with corresponding document and weight
    */
-  public TopSuggestDocsCollector(int num) {
-    super(num);
-    seenDocIds = new HashMap<>(num);
+  public TopSuggestionsCollector(int num) {
+    if (num <= 0) {
+      throw new IllegalArgumentException("'num' must be > 0");
+    }
+    this.num = num;
+    this.priorityQueue = new SuggestScoreDocPriorityQueue(num);
+  }
+
+  /**
+   * Returns the number of results to be collected
+   */
+  public int getCountToCollect() {
+    return num;
   }
 
   @Override
   protected void doSetNextReader(LeafReaderContext context) throws IOException {
-    super.doSetNextReader(context);
-    seenDocIds.clear();
+    docBase = context.docBase;
   }
 
   /**
    * Called for every matched completion,
    * similar to {@link org.apache.lucene.search.LeafCollector#collect(int)}
    * but for completions.
-   * <p>
+   *
    * NOTE: collection at the leaf level is guaranteed to be in
    * descending order of score
    */
   public void collect(int doc, CharSequence key, CharSequence context, float score) throws IOException {
-    //System.out.println("..........");
-    //System.out.println("doc seen: " + (docBase + doc));
-    SuggestScoreDoc originDoc = seenDocIds.get(doc);
-    if (originDoc == null) {
-      if (seenDocIds.size() == num) {
-        throw new CollectionTerminatedException();
-      }
-      SuggestScoreDoc scoreDoc = new SuggestScoreDoc(docBase + doc, key, context, score);
-      //System.out.println("doc added: " + (docBase + doc));
-      if (scoreDoc == priorityQueue.insertWithOverflow(scoreDoc)) {
-        throw new CollectionTerminatedException();
-      }
-      seenDocIds.put(doc, scoreDoc);
-    } else {
-      if (!originDoc.keys.contains(key)) {
-        originDoc.keys.add(key);
-      }
-      if (!originDoc.contexts.contains(context)) {
-        originDoc.contexts.add(context);
-      }
-      originDoc.score += score;
-      //System.out.println("doc removed: " + (docBase + doc));
-      if (priorityQueue.remove(originDoc)) {
-        //System.out.println("doc updated: " + (docBase + doc));
-        priorityQueue.add(originDoc);
-      } else {
-        if (originDoc == priorityQueue.insertWithOverflow(originDoc)) {
-          throw new CollectionTerminatedException();
-        }
-      }
+    SuggestScoreDoc current = new SuggestScoreDoc(docBase + doc, key, context, score);
+    if (current == priorityQueue.insertWithOverflow(current)) {
+      // if the current SuggestScoreDoc has overflown from pq,
+      // we can assume all of the successive collections from
+      // this leaf will be overflown as well
+      // TODO: reuse the overflow instance?
+      throw new CollectionTerminatedException();
     }
-    //System.out.println("..........");
+  }
+
+  /**
+   * Returns at most <code>num</code> Top scoring {@link org.apache.lucene.search.suggest.document.TopSuggestDocs}s
+   */
+  public TopSuggestDocs get() throws IOException {
+    SuggestScoreDoc[] suggestScoreDocs = priorityQueue.getResults();
+    if (suggestScoreDocs.length > 0) {
+      return new TopSuggestDocs(suggestScoreDocs.length, suggestScoreDocs, suggestScoreDocs[0].score);
+    } else {
+      return TopSuggestDocs.EMPTY;
+    }
+  }
+
+  /**
+   * Ignored
+   */
+  @Override
+  public void collect(int doc) throws IOException {
+    // {@link #collect(int, CharSequence, CharSequence, long)} is used
+    // instead
+  }
+
+  /**
+   * Ignored
+   */
+  @Override
+  public boolean needsScores() {
+    return true;
   }
 }

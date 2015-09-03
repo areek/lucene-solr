@@ -52,7 +52,7 @@ public class SuggestIndexSearcher extends IndexSearcher {
    * <code>query</code>
    */
   public TopSuggestDocs suggest(CompletionQuery query, int n) throws IOException {
-    TopSuggestDocsCollector collector = new TopSuggestDocsCollector(n);
+    TopSuggestionsCollector collector = new TopSuggestionsCollector(n);
     suggest(query, collector);
     return collector.get();
   }
@@ -61,10 +61,10 @@ public class SuggestIndexSearcher extends IndexSearcher {
    * Lower-level suggest API.
    * Collects completion hits through <code>collector</code> for <code>query</code>.
    *
-   * <p>{@link TopSuggestDocsCollector#collect(int, CharSequence, CharSequence, float)}
+   * <p>{@link TopSuggestionsCollector#collect(int, CharSequence, CharSequence, float)}
    * is called for every matching completion hit.
    */
-  public void suggest(CompletionQuery query, TopSuggestDocsCollector collector) throws IOException {
+  public void suggest(CompletionQuery query, TopSuggestionsCollector collector) throws IOException {
     // TODO use IndexSearcher.rewrite instead
     // have to implement equals() and hashCode() in CompletionQuerys and co
     query = (CompletionQuery) query.rewrite(getIndexReader());

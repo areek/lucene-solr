@@ -70,13 +70,16 @@ public class TestContextQuery extends LuceneTestCase {
   public void testSimpleContextQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 8, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 7, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion3", 6, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion4", 5, "type4"));
     iw.addDocument(document);
@@ -139,13 +142,16 @@ public class TestContextQuery extends LuceneTestCase {
   public void testNonExactContextQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 4, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 3, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion3", 2, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion4", 1, "type4"));
     iw.addDocument(document);
@@ -173,9 +179,11 @@ public class TestContextQuery extends LuceneTestCase {
   public void testContextPrecedenceBoost() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 4, "typetype"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 3, "type"));
     iw.addDocument(document);
 
@@ -231,13 +239,16 @@ public class TestContextQuery extends LuceneTestCase {
   public void testEmptyContextWithBoosts() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 4));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 3));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion3", 2));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion4", 1, "type4"));
     iw.addDocument(document);
@@ -303,13 +314,16 @@ public class TestContextQuery extends LuceneTestCase {
   public void testMixedContextQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 4, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 3, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion3", 2, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion4", 1, "type4"));
     iw.addDocument(document);
@@ -340,13 +354,16 @@ public class TestContextQuery extends LuceneTestCase {
   public void testFilteringContextQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 4, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 3, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion3", 2, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion4", 1, "type4"));
     iw.addDocument(document);
@@ -374,13 +391,16 @@ public class TestContextQuery extends LuceneTestCase {
   public void testContextQueryRewrite() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 4, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 3, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion3", 2, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion4", 1, "type4"));
     iw.addDocument(document);
@@ -410,10 +430,13 @@ public class TestContextQuery extends LuceneTestCase {
     Document document = new Document();
 
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 8, "type1", "type3"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 7, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion3", 6, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion4", 5, "type4"));
     iw.addDocument(document);
@@ -445,13 +468,16 @@ public class TestContextQuery extends LuceneTestCase {
   public void testAllContextQuery() throws Exception {
     Analyzer analyzer = new MockAnalyzer(random());
     RandomIndexWriter iw = new RandomIndexWriter(random(), dir, iwcWithSuggestField(analyzer, "suggest_field"));
-    Document document = new Document();
 
+    Document document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion1", 4, "type1"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion2", 3, "type2"));
+    iw.addDocument(document);
+    document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion3", 2, "type3"));
     iw.addDocument(document);
-
     document = new Document();
     document.add(new ContextSuggestField("suggest_field", "suggestion4", 1, "type4"));
     iw.addDocument(document);
@@ -512,7 +538,7 @@ public class TestContextQuery extends LuceneTestCase {
           if (cmp != 0) {
             return cmp;
           } else {
-            return o1.output.compareTo(o2.output);
+            return o1.output.get(0).toString().compareTo(o2.output.get(0).toString());
           }
         }
       });

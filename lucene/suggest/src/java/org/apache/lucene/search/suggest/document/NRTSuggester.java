@@ -45,7 +45,7 @@ import static org.apache.lucene.search.suggest.document.NRTSuggester.PayLoadProc
  * <p>
  * NRTSuggester executes Top N search on a weighted FST specified by a {@link CompletionScorer}
  * <p>
- * See {@link #lookup(CompletionScorer, Bits, TopSuggestDocsCollector)} for more implementation
+ * See {@link #lookup(CompletionScorer, Bits, TopSuggestionsCollector)} for more implementation
  * details.
  * <p>
  * FST Format:
@@ -115,28 +115,29 @@ public final class NRTSuggester implements Accountable {
   }
 
   /**
-   * Collects at most {@link TopSuggestDocsCollector#getCountToCollect()} completions that
+   * Collects at most {@link TopSuggestionsCollector#getCountToCollect()} completions that
    * match the provided {@link CompletionScorer}.
    * <p>
-   * The {@link CompletionScorer#automaton} is intersected with the {@link #fst}.
+   * The {@link CompletionWeight#automaton} is intersected with the {@link #fst}.
    * {@link CompletionScorer#weight} is used to compute boosts and/or extract context
    * for each matched partial paths. A top N search is executed on {@link #fst} seeded with
    * the matched partial paths. Upon reaching a completed path, {@link CompletionScorer#accept(int, Bits)}
    * and {@link CompletionScorer#score(float, float)} is used on the document id, index weight
    * and query boost to filter and score the entry, before being collected via
-   * {@link TopSuggestDocsCollector#collect(int, CharSequence, CharSequence, float)}
+   * {@link TopSuggestionsCollector#collect(int, CharSequence, CharSequence, float)}
    */
-  public void lookup(final CompletionScorer scorer, Bits acceptDocs, final TopSuggestDocsCollector collector) throws IOException {
+  public void lookup(final CompletionScorer scorer, Bits acceptDocs, final TopSuggestionsCollector collector) throws IOException {
     final double liveDocsRatio = calculateLiveDocRatio(scorer.reader.numDocs(), scorer.reader.maxDoc());
     if (liveDocsRatio == -1) {
       return;
     }
-    final List<FSTUtil.Path<Pair<Long, BytesRef>>> prefixPaths = FSTUtil.intersectPrefixPaths(scorer.automaton, fst);
+    final List<FSTUtil.Path<Pair<Long, BytesRef>>> prefixPaths = FSTUtil.intersectPrefixPaths(scorer.weight.getAutomaton(), fst);
     final int queueSize = getMaxTopNSearcherQueueSize(collector.getCountToCollect() * prefixPaths.size(),
         scorer.reader.numDocs(), liveDocsRatio, scorer.filtered);
+    int topN = collector instanceof TopSuggestDocsCollector ? collector.getCountToCollect() * maxAnalyzedPathsPerOutput : collector.getCountToCollect();
     Comparator<Pair<Long, BytesRef>> comparator = getComparator();
     Util.TopNSearcher<Pair<Long, BytesRef>> searcher = new Util.TopNSearcher<Pair<Long, BytesRef>>(fst,
-        collector.getCountToCollect(), queueSize, comparator, new ScoringPathComparator(scorer)) {
+        topN, queueSize, comparator, new ScoringPathComparator(scorer)) {
 
       private final CharsRefBuilder spare = new CharsRefBuilder();
 

@@ -17,6 +17,9 @@ package org.apache.lucene.search.suggest.document;
  * limitations under the License.
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.suggest.Lookup;
@@ -43,12 +46,12 @@ public class TopSuggestDocs extends TopDocs {
     /**
      * Matched completion key
      */
-    public final CharSequence key;
+    public final List<CharSequence> keys = new ArrayList<>(1);
 
     /**
      * Context for the completion
      */
-    public final CharSequence context;
+    public final List<CharSequence> contexts = new ArrayList<>(1);
 
     /**
      * Creates a SuggestScoreDoc instance
@@ -59,13 +62,77 @@ public class TopSuggestDocs extends TopDocs {
      */
     public SuggestScoreDoc(int doc, CharSequence key, CharSequence context, float score) {
       super(doc, score);
-      this.key = key;
-      this.context = context;
+      this.keys.add(key);
+      this.contexts.add(context);
     }
 
     @Override
-    public int compareTo(SuggestScoreDoc o) {
-      return Lookup.CHARSEQUENCE_COMPARATOR.compare(key, o.key);
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("keys: [");
+      for (int i = 0; i < keys.size(); i++) {
+        sb.append(keys.get(i));
+        if (i == keys.size() - 1) {
+          sb.append("] ");
+        } else {
+          sb.append(", ");
+        }
+      }
+      sb.append("score: ");
+      sb.append(score);
+      if (contexts.size() > 0) {
+        sb.append(" contexts: [");
+        for (int i = 0; i < contexts.size(); i++) {
+          sb.append(contexts.get(i));
+          if (i == contexts.size() - 1) {
+            sb.append("] ");
+          } else {
+            sb.append(", ");
+          }
+        }
+      }
+      return sb.toString();
+    }
+
+    @Override
+    public int compareTo(SuggestScoreDoc other) {
+      int cmp = Float.compare(other.score, score);
+      if (cmp == 0) {
+        // prefer smaller doc id, in case of a tie
+        cmp = compare(keys, other.keys);
+        if (cmp == 0) {
+          cmp = compare(contexts, other.contexts);
+        }
+        if (cmp == 0) {
+          cmp = Integer.compare(doc, other.doc);
+        }
+      }
+      return cmp;
+    }
+
+    private int compare(List<CharSequence> left, List<CharSequence> right) {
+      final int len = left.size() < right.size() ? left.size() : right.size();
+      for (int i = 0, j = 0; i < len; i++, j++) {
+        CharSequence leftValue = left.get(i);
+        CharSequence rightValue = right.get(i);
+        if (leftValue == null || rightValue == null) {
+          if (leftValue == null && rightValue == null) {
+            return 0;
+          } else if (leftValue == null) {
+            return 1;
+          } else {
+            return -1;
+          }
+        }
+        int cmp = Lookup.CHARSEQUENCE_COMPARATOR.compare(leftValue, rightValue);
+        if (cmp < 0) {
+          return -1;
+        }
+        if (cmp > 0) {
+          return 1;
+        }
+      }
+      return left.size() - right.size();
     }
   }
 

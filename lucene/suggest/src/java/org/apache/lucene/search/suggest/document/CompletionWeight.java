@@ -95,7 +95,7 @@ public class CompletionWeight extends Weight {
         return null;
       }
     }
-    return new CompletionScorer(this, suggester, reader, filteredDocs, filter != null, automaton);
+    return new CompletionScorer(this, suggester, reader, filteredDocs, filter != null);
   }
 
   /**

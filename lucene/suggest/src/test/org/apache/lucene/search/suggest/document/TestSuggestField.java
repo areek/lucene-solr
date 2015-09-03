@@ -20,6 +20,7 @@ package org.apache.lucene.search.suggest.document;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,7 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.suggest.BitsProducer;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.CharsRef;
 import org.apache.lucene.util.CharsRefBuilder;
 import org.apache.lucene.util.LineFileDocs;
 import org.apache.lucene.util.LuceneTestCase;
@@ -418,7 +420,7 @@ public class TestSuggestField extends LuceneTestCase {
     TopSuggestDocs suggest = indexSearcher.suggest(query, num);
     assertEquals(num, suggest.totalHits);
     for (SuggestScoreDoc suggestScoreDoc : suggest.scoreLookupDocs()) {
-      String key = suggestScoreDoc.key.toString();
+      String key = suggestScoreDoc.keys.get(0).toString();
       assertTrue(key.startsWith("abc_"));
       String substring = key.substring(4);
       int fieldValue = Integer.parseInt(substring);
@@ -463,8 +465,8 @@ public class TestSuggestField extends LuceneTestCase {
           assertTrue(topScore >= scoreDoc.score);
         }
         topScore = scoreDoc.score;
-        assertThat((float) mappings.get(scoreDoc.key.toString()), equalTo(scoreDoc.score));
-        assertNotNull(mappings.remove(scoreDoc.key.toString()));
+        assertThat((float) mappings.get(scoreDoc.keys.get(0).toString()), equalTo(scoreDoc.score));
+        assertNotNull(mappings.remove(scoreDoc.keys.get(0).toString()));
       }
     }
 
@@ -589,18 +591,54 @@ public class TestSuggestField extends LuceneTestCase {
   }
 
   static class Entry {
-    final String output;
+    final List<String> output;
     final float value;
-    final String context;
+    final List<String> context;
 
     Entry(String output, float value) {
       this(output, null, value);
     }
 
     Entry(String output, String context, float value) {
-      this.output = output;
+      this(Collections.singletonList(output), Collections.singletonList(context), value);
+    }
+
+    Entry(List<String> outputs, float value) {
+      this(outputs, Collections.singletonList(null), value);
+    }
+
+    Entry(List<String> outputs, List<String> contexts, float value) {
+      this.output = outputs;
       this.value = value;
-      this.context = context;
+      this.context = contexts;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("keys: [");
+      for (int i = 0; i <output.size(); i++) {
+        sb.append(output.get(i));
+        if (i == output.size() - 1) {
+          sb.append("] ");
+        } else {
+          sb.append(", ");
+        }
+      }
+      sb.append("score: ");
+      sb.append(value);
+      if (context.size() > 0) {
+        sb.append(" contexts: [");
+        for (int i = 0; i < context.size(); i++) {
+          sb.append(context.get(i));
+          if (i == context.size() - 1) {
+            sb.append("] ");
+          } else {
+            sb.append(", ");
+          }
+        }
+      }
+      return sb.toString();
     }
   }
 
@@ -609,20 +647,26 @@ public class TestSuggestField extends LuceneTestCase {
     assertThat(suggestScoreDocs.length, equalTo(expected.length));
     for (int i = 0; i < suggestScoreDocs.length; i++) {
       SuggestScoreDoc lookupDoc = suggestScoreDocs[i];
-      String msg = "Expected: " + toString(expected[i]) + " Actual: " + toString(lookupDoc);
-      assertThat(msg, lookupDoc.key.toString(), equalTo(expected[i].output));
-      assertThat(msg, lookupDoc.score, equalTo(expected[i].value));
-      assertThat(msg, lookupDoc.context, equalTo(expected[i].context));
+      String msg = "Expected: " + expected[i].toString() + " Actual: " + lookupDoc.toString();
+      assertThat("[KEYS SIZE MISMATCH]" + msg, lookupDoc.keys.size(), equalTo(expected[i].output.size()));
+      for (int j = 0; j < lookupDoc.keys.size(); j++) {
+        assertThat("[KEY MISMATCH]" + msg, lookupDoc.keys.get(j).toString(), equalTo(expected[i].output.get(j)));
+      }
+      assertThat("[SCORE MISMATCH] " + msg, lookupDoc.score, equalTo(expected[i].value));
+      String[] expectedContexts = expected[i].context.toArray(new String[expected[i].context.size()]);
+      CharSequence[] actualContexts = lookupDoc.contexts.toArray(new CharSequence[lookupDoc.contexts.size()]);
+      assertArrayEquals("[CONTEXTS MISMATCH] " + msg, actualContexts, expectedContexts);
+      assertThat("[CONTEXTS SIZE MISMATCH]" + msg, lookupDoc.contexts.size(), equalTo(expected[i].context.size()));
+      for (int j = 0; j < lookupDoc.contexts.size(); j++) {
+        if (expected[i].context.get(j) == null) {
+          assertNull("[CONTEXT NOT NULL]" + msg, lookupDoc.contexts.get(j));
+        } else {
+          assertThat("[CONTEXT MISMATCH]" + msg, lookupDoc.contexts.get(j).toString(), equalTo(expected[i].context.get(j)));
+        }
+      }
     }
   }
 
-  private static String toString(Entry expected) {
-    return "key:"+ expected.output+" score:"+expected.value+" context:"+expected.context;
-  }
-
-  private static String toString(SuggestScoreDoc actual) {
-    return "key:"+ actual.key.toString()+" score:"+actual.score+" context:"+actual.context;
-  }
 
   static IndexWriterConfig iwcWithSuggestField(Analyzer analyzer, String... suggestFields) {
     return iwcWithSuggestField(analyzer, asSet(suggestFields));
